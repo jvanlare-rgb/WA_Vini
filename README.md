@@ -1,2 +1,2 @@
 # WA_Vini
-Looks at existing AVA's in Washington and evaluates the lands factors relevant to viniculture
+**An interactive spatial exploration of Washington AVAs to support site selection, vineyard planning, and regional understanding.**
