@@ -1,1 +1,45 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Minimal overlay panel */
+#panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 280px;
+  padding: 14px 14px;
+  border-radius: 12px;
+
+  background: rgba(10, 10, 10, 0.75);
+  color: #eee;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  backdrop-filter: blur(8px);
+}
+
+#panel h1 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+#panel p {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+#info {
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.9;
+}
 
