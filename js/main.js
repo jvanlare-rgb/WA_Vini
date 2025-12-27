@@ -7,7 +7,9 @@ const map = new mapboxgl.Map({
   zoom: 6
 });
 
-const AVA_URL = "./data/columbia_valley.geojson"; // rename your file to this
+const C_VAL_URL = "./data/columbia_valley.geojson";
+const C_GOR_URL = "./data/columbia_gorge.geojson";
+const RAT_HILL_URL = "./data/rattlesnake_hills.geojson";
 const SOURCE_ID = "ava";
 const FILL_ID = "ava-fill";
 const OUTLINE_ID = "ava-outline";
