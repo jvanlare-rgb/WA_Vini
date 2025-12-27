@@ -17,7 +17,7 @@ const OUTLINE_ID = "ava-outline";
 let hoveredId = null;
 
 map.on("load", async () => {
-  const res = await fetch(AVA_URL);
+  const res = await fetch(C_VAL_URL);
   const avaGeojson = await res.json();
 
   // Add data source
