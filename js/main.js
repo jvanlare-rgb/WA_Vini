@@ -43,15 +43,20 @@ map.on("load", async () => {
     id: FILL_ID,
     type: "fill",
     source: SOURCE_ID,
-    paint: {
-      "fill-opacity": 0.25,
-      "fill-color": [
-        "case",
-        ["boolean", ["feature-state", "hover"], false],
-        "#2ecc71",
-        "#ffffff"
-      ]
-    }
+paint: {
+  "fill-color": [
+    "case",
+    ["boolean", ["feature-state", "hover"], false],
+    "#2ecc71",
+    "#2ecc71"
+  ],
+  "fill-opacity": [
+    "case",
+    ["boolean", ["feature-state", "hover"], false],
+    0.6,   // hovered AVA (stands out)
+    0.12   // non-hovered AVAs (very transparent)
+  ]
+}
   });
 
   map.addLayer({
