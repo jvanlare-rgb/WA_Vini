@@ -7,35 +7,19 @@ const map = new mapboxgl.Map({
   zoom: 6
 });
 
-const C_VAL_URL = "./data/columbia_valley.geojson";
-const C_GOR_URL = "./data/columbia_gorge.geojson";
-const RAT_HILL_URL = "./data/rattlesnake_hills.geojson";
+const AVA_URL = "./data/avas_wa.geojson";
 const SOURCE_ID = "ava";
 const FILL_ID = "ava-fill";
 const OUTLINE_ID = "ava-outline"; 
+
 let hoveredId = null;
 
 map.on("load", async () => {
-  const [val, gor, rat] = await Promise.all([
-    fetch(C_VAL_URL).then(r => r.json()),
-    fetch(C_GOR_URL).then(r => r.json()),
-    fetch(RAT_HILL_URL).then(r => r.json())
-  ]);
-
-  // Combine all features into one FeatureCollection
-  const avaGeojson = {
-    type: "FeatureCollection",
-    features: [
-      ...val.features,
-      ...gor.features,
-      ...rat.features
-    ]
-  };
+  const avaGeojson = await fetch(AVA_URL).then((r) => r.json());
 
   map.addSource(SOURCE_ID, {
     type: "geojson",
     data: avaGeojson,
-    // Only works if each feature has a unique ava_id
     promoteId: "ava_id"
   });
 
@@ -65,7 +49,7 @@ paint: {
     source: SOURCE_ID,
     paint: {
       "line-width": 2,
-      "line-opacity": 0.85
+      "line-opacity": 0.65
     }
   });
 
@@ -89,31 +73,43 @@ paint: {
 
     const info = document.getElementById("info");
     const name = f.properties?.name;
-    const createdRaw = f.properties?.created;
+    const createdRaw =
+      f.properties?.created ??
+      f.properties?.established ??
+      f.properties?.date_created ??
+      f.properties?.created_date ??
+      null;
 
-// nice formatting (optional)
-    const createdPretty = createdRaw
-    ? new Date(createdRaw).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
-  : null;
+    let createdPretty = null;
+    if (createdRaw) {
+      const d = new Date(createdRaw);
+      if (!isNaN(d.getTime())) {
+        createdPretty = d.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        });
+      }
+    }
 
-  if (name) {
     info.innerHTML = `
       <div>AVA: ${name}</div>
-      <div style="opacity:0.85; font-size:0.9em;">Date created: ${createdPretty ?? createdRaw ?? "Unknown"}</div>
-      `;
-  } else {
-    info.textContent = "AVA boundary";
-}
-
+      <div style="opacity:0.85; font-size:0.9em;">
+        Date created: ${createdPretty ?? createdRaw ?? "Unknown"}
+      </div>
+    `;
   });
 
   map.on("mouseleave", FILL_ID, () => {
     map.getCanvas().style.cursor = "";
+
     if (hoveredId !== null) {
       map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
     }
     hoveredId = null;
-    document.getElementById("info").textContent = "Move your mouse over an AVA";
+
+    const info = document.getElementById("info");
+    if (info) info.textContent = "Move your mouse over an AVA";
   });
 });
 
