@@ -12,8 +12,7 @@ const C_GOR_URL = "./data/columbia_gorge.geojson";
 const RAT_HILL_URL = "./data/rattlesnake_hills.geojson";
 const SOURCE_ID = "ava";
 const FILL_ID = "ava-fill";
-const OUTLINE_ID = "ava-outline";
-
+const OUTLINE_ID = "ava-outline"; 
 let hoveredId = null;
 
 map.on("load", async () => {
@@ -84,7 +83,23 @@ map.on("load", async () => {
     map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: true });
 
     const info = document.getElementById("info");
-    info.textContent = f.properties?.name ? `AVA: ${f.properties.name}` : "AVA boundary";
+    const name = f.properties?.name;
+    const createdRaw = f.properties?.created;
+
+// nice formatting (optional)
+    const createdPretty = createdRaw
+    ? new Date(createdRaw).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+  : null;
+
+  if (name) {
+    info.innerHTML = `
+      <div>AVA: ${name}</div>
+      <div style="opacity:0.85; font-size:0.9em;">Date created: ${createdPretty ?? createdRaw ?? "Unknown"}</div>
+      `;
+  } else {
+    info.textContent = "AVA boundary";
+}
+
   });
 
   map.on("mouseleave", FILL_ID, () => {
