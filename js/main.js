@@ -48,7 +48,7 @@ paint: {
     "case",
     ["boolean", ["feature-state", "hover"], false],
     "#2ecc71",
-    "#2ecc71"
+    "#D3D3D3"
   ],
   "fill-opacity": [
     "case",
