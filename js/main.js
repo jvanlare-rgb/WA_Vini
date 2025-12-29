@@ -2,20 +2,44 @@ mapboxgl.accessToken = "pk.eyJ1IjoianZhbmxhcmUiLCJhIjoiY21oY2Zrd29nMTN2dDJtcHh5Y
 
 const map = new mapboxgl.Map({
   container: "map",
-  style: "mapbox://styles/mapbox/dark-v11", // dark basemap
-  center: [-119.0, 46.8],                  // temporary (we'll fit to bounds)
+  style: "mapbox://styles/mapbox/dark-v11",
+  center: [-119.0, 46.8],
   zoom: 6
 });
 
 const AVA_URL = "./data/avas_wa.geojson";
+
 const SOURCE_ID = "ava";
 const FILL_ID = "ava-fill";
-const OUTLINE_ID = "ava-outline"; 
+const OUTLINE_ID = "ava-outline";
 
 let hoveredId = null;
 
+// cache area by feature id so we can quickly choose the smallest AVA under the mouse
+const areaById = new Map();
+
+// helper: try a few likely property names for "created"
+function getCreatedRaw(props) {
+  return (
+    props?.created ??
+    props?.established ??
+    props?.established_date ??
+    props?.date ??
+    props?.created_date ??
+    null
+  );
+}
+
 map.on("load", async () => {
-  const avaGeojson = await fetch(AVA_URL).then((r) => r.json());
+  const avaGeojson = await fetch(AVA_URL).then(r => r.json());
+
+  // build area cache (uses Turf). If a feature is missing an id, promoteId below must match.
+  for (const feat of avaGeojson.features) {
+    // With promoteId:"ava_id", Mapbox feature.id becomes feat.properties.ava_id at render time
+    // Here we can cache by that same value.
+    const id = feat?.properties?.ava_id ?? feat?.id;
+    if (id != null) areaById.set(id, turf.area(feat));
+  }
 
   map.addSource(SOURCE_ID, {
     type: "geojson",
@@ -27,20 +51,20 @@ map.on("load", async () => {
     id: FILL_ID,
     type: "fill",
     source: SOURCE_ID,
-paint: {
-  "fill-color": [
-    "case",
-    ["boolean", ["feature-state", "hover"], false],
-    "#2ecc71",
-    "#D3D3D3"
-  ],
-  "fill-opacity": [
-    "case",
-    ["boolean", ["feature-state", "hover"], false],
-    0.6,   // hovered AVA (stands out)
-    0.12   // non-hovered AVAs (very transparent)
-  ]
-}
+    paint: {
+      "fill-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#2ecc71",
+        "#D3D3D3"
+      ],
+      "fill-opacity": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        0.6,   // hovered AVA
+        0.12   // all other AVAs (transparent so you can see basemap)
+      ]
+    }
   });
 
   map.addLayer({
@@ -49,7 +73,7 @@ paint: {
     source: SOURCE_ID,
     paint: {
       "line-width": 2,
-      "line-opacity": 0.65
+      "line-opacity": 0.85
     }
   });
 
@@ -57,40 +81,55 @@ paint: {
   const bbox = turf.bbox(avaGeojson);
   map.fitBounds(bbox, { padding: 60, duration: 800 });
 
-  // Hover behavior
-  map.on("mousemove", FILL_ID, (e) => {
+  // Hover behavior (pick smallest polygon under cursor)
+  map.on("mousemove", (e) => {
+    const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
+
+    if (!hits.length) {
+      map.getCanvas().style.cursor = "";
+      if (hoveredId !== null) {
+        map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
+        hoveredId = null;
+      }
+      document.getElementById("info").textContent = "Move your mouse over an AVA";
+      return;
+    }
+
     map.getCanvas().style.cursor = "pointer";
-    if (!e.features.length) return;
 
-    const f = e.features[0];
+    // Choose smallest by area (so little AVAs win even when overlapped)
+    let chosen = hits[0];
+    let bestArea = Infinity;
 
-    if (hoveredId !== null) {
+    for (const f of hits) {
+      const id = f.id;
+      const a = areaById.get(id);
+
+      // fallback: if not cached for some reason, compute on the fly
+      const area = (a != null) ? a : turf.area(f);
+
+      if (area < bestArea) {
+        bestArea = area;
+        chosen = f;
+      }
+    }
+
+    // update hover state
+    if (hoveredId !== null && hoveredId !== chosen.id) {
       map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
     }
 
-    hoveredId = f.id;
+    hoveredId = chosen.id;
     map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: true });
 
+    // update sidebar
     const info = document.getElementById("info");
-    const name = f.properties?.name;
-    const createdRaw =
-      f.properties?.created ??
-      f.properties?.established ??
-      f.properties?.date_created ??
-      f.properties?.created_date ??
-      null;
+    const name = chosen.properties?.name ?? chosen.properties?.title ?? "AVA";
+    const createdRaw = getCreatedRaw(chosen.properties);
 
-    let createdPretty = null;
-    if (createdRaw) {
-      const d = new Date(createdRaw);
-      if (!isNaN(d.getTime())) {
-        createdPretty = d.toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "long",
-          day: "numeric"
-        });
-      }
-    }
+    const createdPretty = createdRaw
+      ? new Date(createdRaw).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+      : null;
 
     info.innerHTML = `
       <div>AVA: ${name}</div>
@@ -102,14 +141,10 @@ paint: {
 
   map.on("mouseleave", FILL_ID, () => {
     map.getCanvas().style.cursor = "";
-
     if (hoveredId !== null) {
       map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
     }
     hoveredId = null;
-
-    const info = document.getElementById("info");
-    if (info) info.textContent = "Move your mouse over an AVA";
+    document.getElementById("info").textContent = "Move your mouse over an AVA";
   });
 });
-
