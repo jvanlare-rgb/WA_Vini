@@ -33,6 +33,24 @@ function getCreatedRaw(props) {
 map.on("load", async () => {
   const avaGeojson = await fetch(AVA_URL).then(r => r.json());
 
+  map.addSource("mapbox-dem", {
+  type: "raster-dem",
+  url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+  tileSize: 512,
+  maxzoom: 14
+});
+
+map.setTerrain({ source: "mapbox-dem", exaggeration: 1.6 }); // bump up/down: 1.2–2.2
+
+map.addLayer({
+  id: "hillshade",
+  type: "hillshade",
+  source: "mapbox-dem",
+  paint: {
+    "hillshade-exaggeration": 0.6
+  }
+});
+
   // build area cache (uses Turf). If a feature is missing an id, promoteId below must match.
   for (const feat of avaGeojson.features) {
     // With promoteId:"ava_id", Mapbox feature.id becomes feat.properties.ava_id at render time
