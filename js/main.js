@@ -51,7 +51,6 @@ map.addLayer(
       "hillshade-exaggeration": 0.6
     }
   },
-  FILL_ID // 👈 ensures hillshade renders under AVAs
 );
 
 
@@ -98,6 +97,8 @@ map.addLayer(
       "line-opacity": 0.55
     }
   });
+
+  map.moveLayer("hillshade", FILL_ID); // puts hillshade under AVAs
 
   // Fit to all AVAs
   const bbox = turf.bbox(avaGeojson);
