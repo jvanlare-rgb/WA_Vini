@@ -83,7 +83,7 @@ map.addLayer(
       "fill-opacity": [
         "case",
         ["boolean", ["feature-state", "hover"], false],
-        0.6,   // hovered AVA
+        0.3,   // hovered AVA
         0.12   // all other AVAs (transparent so you can see basemap)
       ]
     }
@@ -94,8 +94,8 @@ map.addLayer(
     type: "line",
     source: SOURCE_ID,
     paint: {
-      "line-width": 2,
-      "line-opacity": 0.85
+      "line-width": 1,
+      "line-opacity": 0.55
     }
   });
 
