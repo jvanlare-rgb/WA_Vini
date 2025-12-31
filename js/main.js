@@ -149,19 +149,21 @@ map.on("mousemove", FILL_ID, (e) => {
 });
 
 
-map.on("click", FILL_ID, (e) => {
+map.on("click", (e) => {
   const features = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
-  if (!features.length) return;
 
-  // choose smallest area feature at the click point (helps with overlaps)
+  // click empty space => reset view
+  if (!features.length) {
+    map.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+    return;
+  }
+
   let chosen = features[0];
   let bestArea = Infinity;
 
   for (const f of features) {
-    const id = f.id;                 // because promoteId makes f.id = ava_id
-    const area = areaById.get(id);   // use the global cache
-    const a = (typeof area === "number") ? area : Infinity;
-
+    const id = String(f.id);
+    const a = areaById.get(id) ?? turf.area(f); // fallback
     if (a < bestArea) {
       bestArea = a;
       chosen = f;
@@ -170,18 +172,10 @@ map.on("click", FILL_ID, (e) => {
 
   const bounds = turf.bbox(chosen);
 
-  map.fitBounds(bounds, {
-    padding: 80,
-    duration: 1200,
-    maxZoom: 12.5
-  });
-
-  map.easeTo({
-    pitch: 70,
-    bearing: -25,
-    duration: 1200
-  });
+  map.fitBounds(bounds, { padding: 80, duration: 1200, maxZoom: 12.5 });
+  map.easeTo({ pitch: 70, bearing: -25, duration: 1200 });
 });
+
 
 
 
