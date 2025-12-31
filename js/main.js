@@ -132,6 +132,13 @@ map.addLayer({
       }
     }
 
+    const areaSqmById = new Map();
+
+    for (const feat of avaGeojson.features) {
+      const id = feat.properties.ava_id;
+      areaSqmById.set(id, turf.area(feat));
+  }
+
     // update hover state
     if (hoveredId !== null && hoveredId !== chosen.id) {
       map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
@@ -156,6 +163,53 @@ map.addLayer({
       </div>
     `;
   });
+
+  map.on("click", FILL_ID, (e) => {
+  const features = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
+  if (!features.length) return;
+
+  // choose smallest area feature at the click point (helps with overlaps)
+  let chosen = features[0];
+  let bestArea = Infinity;
+
+  for (const f of features) {
+    const id = f.properties?.ava_id ?? f.id;
+    const area = areaSqmById.get(id);
+
+    // if missing, treat as large so it won't win
+    const a = (typeof area === "number") ? area : Infinity;
+
+    if (a < bestArea) {
+      bestArea = a;
+      chosen = f;
+    }
+  }
+
+  const bounds = turf.bbox(chosen); // [minX, minY, maxX, maxY]
+
+  // Zoom to bounds, and tilt into a 3D view
+  map.fitBounds(bounds, {
+    padding: 80,
+    duration: 1200,
+    maxZoom: 12.5 // raise if you want tighter zoom on tiny AVAs
+  });
+
+  // Immediately (or after) apply pitch/bearing for 3D effect
+  map.easeTo({
+    pitch: 70,      // 0 = top-down, 60–75 = strong 3D
+    bearing: -25,   // rotate a bit so terrain looks more dramatic
+    duration: 1200
+  });
+});
+
+
+  map.on("click", (e) => {
+  const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
+  if (hits.length) return;
+
+  map.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+});
+
 
   map.on("mouseleave", FILL_ID, () => {
     map.getCanvas().style.cursor = "";
