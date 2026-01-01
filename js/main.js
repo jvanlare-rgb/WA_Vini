@@ -99,7 +99,9 @@ map.addLayer(
     source: "mapbox-dem",
     paint: {
       "hillshade-exaggeration": 0.6,
-      "hillshade-opacity": 0.25
+      "hillshade-shadow-color": "#2b2b2b",
+      "hillshade-highlight-color": "#ffffff",
+      "hillshade-accent-color": "#bdbdbd"
     }
   },
   labelLayerId // inserts it *below* labels
