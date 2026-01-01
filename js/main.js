@@ -7,3 +7,7 @@ const map = new mapboxgl.Map({
   zoom: 6
 });
 
+
+// Helpful: surface errors in console
+map.on("error", (e) => console.log("MAP ERROR:", e?.error || e));
+map.on("load", () => console.log("✅ style loaded"));
