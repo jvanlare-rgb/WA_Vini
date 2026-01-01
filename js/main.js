@@ -5,7 +5,7 @@ console.log("NEW MAIN.JS LOADED", new Date().toISOString());
 
 const map = new mapboxgl.Map({
   container: "map",
-  style: "mapbox://styles/jvanlare/cmjuj1tdb000z01s48ibtg7t1",
+  style: "mapbox://styles/mapbox/outdoors-v12",
   center: [-119.0, 46.8],
   zoom: 6
 });
