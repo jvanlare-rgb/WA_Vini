@@ -27,6 +27,24 @@ function getCreatedRaw(props) {
   );
 }
 
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+
+// Map area -> maxZoom. Tune the numbers to taste.
+function zoomFromAreaSqMeters(area) {
+  // log scale so it feels natural
+  const logA = Math.log10(area);
+
+  // Example mapping:
+  // log10(area) ~ 7.5 (small) => zoom ~ 12.8
+  // log10(area) ~ 10.5 (huge) => zoom ~ 9.5
+  const z = 22.0 - 1.2 * logA;
+
+  return clamp(z, 8.5, 13.5);
+}
+
+
 // Fetches all Geojson
 map.on("load", async () => {
   const avaGeojson = await fetch(AVA_URL).then(r => r.json());
@@ -179,7 +197,6 @@ map.on("mouseleave", FILL_ID, () => {
 });
 
   
-// Click: choose smallest overlapped AVA, zoom + tilt; click empty resets
 map.on("click", (e) => {
   const features = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
 
@@ -188,21 +205,37 @@ map.on("click", (e) => {
     return;
   }
 
-  let chosen = features[0];
-  let bestArea = Infinity;
-
-  for (const f of features) {
-    const id = String(f.id);
-    const a = areaById.get(id) ?? turf.area(f);
-    if (a < bestArea) {
-      bestArea = a;
-      chosen = f;
+    // pick smallest overlapped AVA
+    let chosen = features[0];
+    let bestArea = Infinity;
+  
+    for (const f of features) {
+      const id = String(f.id);
+      const a = areaById.get(id) ?? turf.area(f);
+      if (a < bestArea) {
+        bestArea = a;
+        chosen = f;
+      }
     }
-  }
-
+  
+    const id = String(chosen.id);
+    const area = areaById.get(id) ?? turf.area(chosen);
+  
     const bounds = turf.bbox(chosen);
-
-    map.fitBounds(bounds, { padding: 80, duration: 1200, maxZoom: 12.5 });
+  
+    // Compute proportional zoom
+    const maxZoom = zoomFromAreaSqMeters(area);
+  
+    // Optional: make padding slightly larger for tiny AVAs
+    const padding = clamp(120 - Math.log10(area) * 8, 60, 120);
+  
+    map.fitBounds(bounds, {
+      padding,
+      duration: 1200,
+      maxZoom
+    });
+  
     map.easeTo({ pitch: 70, bearing: -25, duration: 1200 });
-  });
+});
+
 });
