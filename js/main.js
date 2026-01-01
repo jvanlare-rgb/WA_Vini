@@ -150,6 +150,17 @@ map.on("load", async () => {
   `;
 });
 
+
+map.on("mouseleave", FILL_ID, () => {
+  map.getCanvas().style.cursor = "";
+  if (hoveredId !== null) {
+    map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
+    hoveredId = null;
+  }
+  document.getElementById("info").textContent = "Move your mouse over an AVA";
+});
+
+  
   // Click: choose smallest overlapped AVA, zoom + tilt; click empty resets
   map.on("click", (e) => {
     const features = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
