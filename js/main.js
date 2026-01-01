@@ -7,8 +7,6 @@ const map = new mapboxgl.Map({
   zoom: 6
 });
 
-
-
 const AVA_URL = "./data/avas_wa.geojson";
 
 const SOURCE_ID = "ava";
