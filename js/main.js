@@ -79,34 +79,39 @@ map.on("load", async () => {
     }
   });
 
-  // Terrain + hillshade
-  map.addSource("mapbox-dem", {
-    type: "raster-dem",
-    url: "mapbox://mapbox.mapbox-terrain-dem-v1",
-    tileSize: 512,
-    maxzoom: 14
-  });
+// 1) DEM for terrain
+map.addSource("dem-terrain", {
+  type: "raster-dem",
+  url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+  tileSize: 512,
+  maxzoom: 14
+});
 
-  map.setTerrain({ source: "mapbox-dem", exaggeration: 1.3 });
+map.setTerrain({ source: "dem-terrain", exaggeration: 1.3 });
 
-const labelLayerId = map.getStyle().layers.find(
-  (l) => l.type === "symbol" && l.layout && l.layout["text-field"]
-)?.id;
+// 2) DEM for hillshade (separate source => full res)
+map.addSource("dem-hillshade", {
+  type: "raster-dem",
+  url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+  tileSize: 512,
+  maxzoom: 14
+});
 
 map.addLayer(
   {
     id: "hillshade",
     type: "hillshade",
-    source: "mapbox-dem",
+    source: "dem-hillshade",
     paint: {
-      "hillshade-exaggeration": 0.6,
+      "hillshade-exaggeration": 0.5,
       "hillshade-shadow-color": "#2b2b2b",
       "hillshade-highlight-color": "#ffffff",
       "hillshade-accent-color": "#bdbdbd"
     }
   },
-  labelLayerId // inserts it *below* labels
+  labelLayerId
 );
+
 
 // keep AVAs above hillshade
 map.moveLayer(FILL_ID);
