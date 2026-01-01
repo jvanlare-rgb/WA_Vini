@@ -76,11 +76,48 @@ map.on("load", async () => {
     }
   });
 
-  // Fit to all AVAs
-  const bbox = turf.bbox(avaGeojson);
-  map.fitBounds(bbox, { padding: 60, duration: 800 });
+  // 1) DEM for terrain
+  map.addSource("dem-terrain", {
+    type: "raster-dem",
+    url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+    tileSize: 512,
+    maxzoom: 14
+  });
 
-  map.on("mousemove", (e) => {
+  map.setTerrain({ source: "dem-terrain", exaggeration: 1.3 });
+
+  // 2) DEM for hillshade (separate source => full res)
+  map.addSource("dem-hillshade", {
+    type: "raster-dem",
+    url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+    tileSize: 512,
+    maxzoom: 14
+  });
+
+  map.addLayer(
+  {
+    id: "hillshade",
+    type: "hillshade",
+    source: "dem-hillshade",
+    paint: {
+      "hillshade-exaggeration": 0.2,
+      "hillshade-shadow-color": "rgba(0,0,0,0.08)",
+      "hillshade-highlight-color": "rgba(255,255,255,0.08)",
+      "hillshade-accent-color": "rgba(0,0,0,0.04)"
+    }
+  },
+);
+
+
+// keep AVAs above hillshade
+map.moveLayer(FILL_ID);
+map.moveLayer(OUTLINE_ID);
+
+// Fit to all AVAs
+const bbox = turf.bbox(avaGeojson);
+map.fitBounds(bbox, { padding: 60, duration: 800 });
+
+map.on("mousemove", (e) => {
   const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
 
   if (!hits.length) {
@@ -142,26 +179,26 @@ map.on("mouseleave", FILL_ID, () => {
 });
 
   
-  // Click: choose smallest overlapped AVA, zoom + tilt; click empty resets
-  map.on("click", (e) => {
-    const features = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
+// Click: choose smallest overlapped AVA, zoom + tilt; click empty resets
+map.on("click", (e) => {
+  const features = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
 
-    if (!features.length) {
-      map.easeTo({ pitch: 0, bearing: 0, duration: 800 });
-      return;
+  if (!features.length) {
+    map.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+    return;
+  }
+
+  let chosen = features[0];
+  let bestArea = Infinity;
+
+  for (const f of features) {
+    const id = String(f.id);
+    const a = areaById.get(id) ?? turf.area(f);
+    if (a < bestArea) {
+      bestArea = a;
+      chosen = f;
     }
-
-    let chosen = features[0];
-    let bestArea = Infinity;
-
-    for (const f of features) {
-      const id = String(f.id);
-      const a = areaById.get(id) ?? turf.area(f);
-      if (a < bestArea) {
-        bestArea = a;
-        chosen = f;
-      }
-    }
+  }
 
     const bounds = turf.bbox(chosen);
 
