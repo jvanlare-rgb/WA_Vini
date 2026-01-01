@@ -84,19 +84,29 @@ map.on("load", async () => {
     maxzoom: 14
   });
 
-  map.setTerrain({ source: "mapbox-dem", exaggeration: 1.6 });
+  map.setTerrain({ source: "mapbox-dem", exaggeration: 1.3 });
 
-  map.addLayer({
+const labelLayerId = map.getStyle().layers.find(
+  (l) => l.type === "symbol" && l.layout && l.layout["text-field"]
+)?.id;
+
+map.addLayer(
+  {
     id: "hillshade",
     type: "hillshade",
     source: "mapbox-dem",
-    paint: { "hillshade-exaggeration": 0.6,
-           "hillshade-opacity": 0.25
-           }
-  });
+    paint: {
+      "hillshade-exaggeration": 0.6,
+      "hillshade-opacity": 0.25
+    }
+  },
+  labelLayerId // inserts it *below* labels
+);
 
-  // Put hillshade under AVA fill (so it doesn't wash out your polygons)
-  map.moveLayer("hillshade", FILL_ID);
+// keep AVAs above hillshade
+map.moveLayer(FILL_ID);
+map.moveLayer(OUTLINE_ID);
+
 
   // Fit to all AVAs
   const bbox = turf.bbox(avaGeojson);
