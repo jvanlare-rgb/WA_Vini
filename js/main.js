@@ -99,47 +99,6 @@ map.on("load", async () => {
   const bbox = turf.bbox(avaGeojson);
   map.fitBounds(bbox, { padding: 60, duration: 800 });
 
-  // Hover: pick smallest polygon under cursor
-  map.on("mousemove", FILL_ID, (e) => {
-    map.getCanvas().style.cursor = "pointer";
-    const hits = e.features;
-    if (!hits || !hits.length) return;
-
-    let chosen = hits[0];
-    let bestArea = Infinity;
-
-    for (const f of hits) {
-      const id = String(f.id);
-      const a = areaById.get(id) ?? turf.area(f);
-      if (a < bestArea) {
-        bestArea = a;
-        chosen = f;
-      }
-    }
-
-    if (hoveredId !== null && hoveredId !== chosen.id) {
-      map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
-    }
-
-    hoveredId = chosen.id;
-    map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: true });
-
-    const info = document.getElementById("info");
-    const name = chosen.properties?.name ?? chosen.properties?.title ?? "AVA";
-    const createdRaw = getCreatedRaw(chosen.properties);
-
-    const createdPretty = createdRaw
-      ? new Date(createdRaw).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
-      : null;
-
-    info.innerHTML = `
-      <div>AVA: ${name}</div>
-      <div style="opacity:0.85; font-size:0.9em;">
-        Date created: ${createdPretty ?? createdRaw ?? "Unknown"}
-      </div>
-    `;
-  });
-
   map.on("mousemove", (e) => {
   const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
 
