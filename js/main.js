@@ -88,7 +88,7 @@ map.on("load", async () => {
     type: "hillshade",
     source: "mapbox-dem",
     paint: { "hillshade-exaggeration": 0.6,
-           "hillside-opacity": 0.25
+           "hillshade-opacity": 0.25
            }
   });
 
@@ -140,14 +140,56 @@ map.on("load", async () => {
     `;
   });
 
-  map.on("mouseleave", FILL_ID, () => {
+  map.on("mousemove", (e) => {
+  const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
+
+  if (!hits.length) {
     map.getCanvas().style.cursor = "";
     if (hoveredId !== null) {
       map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
+      hoveredId = null;
     }
-    hoveredId = null;
     document.getElementById("info").textContent = "Move your mouse over an AVA";
-  });
+    return;
+  }
+
+  map.getCanvas().style.cursor = "pointer";
+
+  // pick smallest
+  let chosen = hits[0];
+  let bestArea = Infinity;
+
+  for (const f of hits) {
+    const id = String(f.id);
+    const a = areaById.get(id) ?? turf.area(f);
+    if (a < bestArea) {
+      bestArea = a;
+      chosen = f;
+    }
+  }
+
+  if (hoveredId !== null && hoveredId !== chosen.id) {
+    map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: false });
+  }
+
+  hoveredId = chosen.id;
+  map.setFeatureState({ source: SOURCE_ID, id: hoveredId }, { hover: true });
+
+  const info = document.getElementById("info");
+  const name = chosen.properties?.name ?? chosen.properties?.title ?? "AVA";
+  const createdRaw = getCreatedRaw(chosen.properties);
+
+  const createdPretty = createdRaw
+    ? new Date(createdRaw).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })
+    : null;
+
+  info.innerHTML = `
+    <div>AVA: ${name}</div>
+    <div style="opacity:0.85; font-size:0.9em;">
+      Date created: ${createdPretty ?? createdRaw ?? "Unknown"}
+    </div>
+  `;
+});
 
   // Click: choose smallest overlapped AVA, zoom + tilt; click empty resets
   map.on("click", (e) => {
