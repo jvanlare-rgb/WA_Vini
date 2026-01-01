@@ -100,10 +100,10 @@ map.addLayer(
     type: "hillshade",
     source: "dem-hillshade",
     paint: {
-      "hillshade-exaggeration": 0.5,
-      "hillshade-shadow-color": "#2b2b2b",
-      "hillshade-highlight-color": "#ffffff",
-      "hillshade-accent-color": "#bdbdbd"
+      "hillshade-exaggeration": 0.2,
+      "hillshade-shadow-color": "rgba(0,0,0,0.08)",
+      "hillshade-highlight-color": "rgba(255,255,255,0.08)",
+      "hillshade-accent-color": "rgba(0,0,0,0.04)"
     }
   },
 );
