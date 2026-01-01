@@ -2,7 +2,7 @@ mapboxgl.accessToken = "pk.eyJ1IjoianZhbmxhcmUiLCJhIjoiY21oY2Zrd29nMTN2dDJtcHh5Y
 
 const map = new mapboxgl.Map({
   container: "map",
-  style: "mapbox://styles/mapbox/outdoors-v12",
+  style: "mapbox://styles/jvanlare/cmjuj1tdb000z01s48ibtg7t1",
   center: [-119.0, 46.8],
   zoom: 6
 });
@@ -106,7 +106,6 @@ map.addLayer(
       "hillshade-accent-color": "#bdbdbd"
     }
   },
-  labelLayerId
 );
 
 
