@@ -76,44 +76,6 @@ map.on("load", async () => {
     }
   });
 
-// 1) DEM for terrain
-map.addSource("dem-terrain", {
-  type: "raster-dem",
-  url: "mapbox://mapbox.mapbox-terrain-dem-v1",
-  tileSize: 512,
-  maxzoom: 14
-});
-
-map.setTerrain({ source: "dem-terrain", exaggeration: 1.3 });
-
-// 2) DEM for hillshade (separate source => full res)
-map.addSource("dem-hillshade", {
-  type: "raster-dem",
-  url: "mapbox://mapbox.mapbox-terrain-dem-v1",
-  tileSize: 512,
-  maxzoom: 14
-});
-
-map.addLayer(
-  {
-    id: "hillshade",
-    type: "hillshade",
-    source: "dem-hillshade",
-    paint: {
-      "hillshade-exaggeration": 0.2,
-      "hillshade-shadow-color": "rgba(0,0,0,0.08)",
-      "hillshade-highlight-color": "rgba(255,255,255,0.08)",
-      "hillshade-accent-color": "rgba(0,0,0,0.04)"
-    }
-  },
-);
-
-
-// keep AVAs above hillshade
-map.moveLayer(FILL_ID);
-map.moveLayer(OUTLINE_ID);
-
-
   // Fit to all AVAs
   const bbox = turf.bbox(avaGeojson);
   map.fitBounds(bbox, { padding: 60, duration: 800 });
