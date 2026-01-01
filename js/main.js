@@ -87,7 +87,9 @@ map.on("load", async () => {
     id: "hillshade",
     type: "hillshade",
     source: "mapbox-dem",
-    paint: { "hillshade-exaggeration": 0.6 }
+    paint: { "hillshade-exaggeration": 0.6,
+           "hillside-opacity": 0.25
+           }
   });
 
   // Put hillshade under AVA fill (so it doesn't wash out your polygons)
