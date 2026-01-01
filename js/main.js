@@ -27,6 +27,7 @@ function getCreatedRaw(props) {
   );
 }
 
+// Fetches all Geojson
 map.on("load", async () => {
   const avaGeojson = await fetch(AVA_URL).then(r => r.json());
 
@@ -43,6 +44,7 @@ map.on("load", async () => {
     promoteId: "ava_id"
   });
 
+  // AVA overlay
   map.addLayer({
     id: FILL_ID,
     type: "fill",
@@ -63,6 +65,7 @@ map.on("load", async () => {
     }
   });
 
+  // AVA outline
   map.addLayer({
     id: OUTLINE_ID,
     type: "line",
