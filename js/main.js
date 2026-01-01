@@ -1,3 +1,5 @@
+console.log("NEW MAIN.JS LOADED", new Date().toISOString());
+
 mapboxgl.accessToken = "pk.eyJ1IjoianZhbmxhcmUiLCJhIjoiY21oY2Zrd29nMTN2dDJtcHh5YzlxYWVtNSJ9.bP5BGQT-tdmmsC1SStqvNw";
 
 const map = new mapboxgl.Map({
