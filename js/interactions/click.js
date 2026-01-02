@@ -1,17 +1,4 @@
 // js/interactions/click.js
-
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
-}
-
-// Map area -> maxZoom (log scale)
-function zoomFromAreaSqMeters(area) {
-  const logA = Math.log10(area);
-  const z = 22.0 - 1.2 * logA;
-  return clamp(z, 8.5, 13.5);
-}
-
-// js/interactions/click.js
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
