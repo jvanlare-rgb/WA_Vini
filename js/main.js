@@ -34,5 +34,5 @@ map.on("load", async () => {
 
   // Interactions
   attachHover(map, state, CONFIG.ids);
-  attachClick(map, turf, { FILL_ID }, areaById);
+  attachClick(map, turf, CONFIG.ids, state.areaById);
 });
