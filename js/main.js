@@ -1,5 +1,5 @@
 // js/main.js
-import { CONFIG } from "./ui/config.js";
+import { CONFIG } from "./config.js";
 import { initMap } from "./map/initMap.js";
 import { addAvaSourceAndLayers, addTerrainAndHillshade } from "./map/layers.js";
 import { attachHover } from "./interactions/hover.js";
