@@ -6,7 +6,7 @@ function clamp(n, min, max) {
 
 function zoomFromArea(areaSqM) {
   const logA = Math.log10(Math.max(areaSqM, 1));
-  const z = 22.0 - 1.2 * logA;
+  const z = 22.0 - 0.8 * logA;
   return clamp(z, 8.5, 14.2);
 }
 
