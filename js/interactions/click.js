@@ -100,7 +100,7 @@ export async function attachClick(map, turf, ids, areaById) {
 
     const chosen = pickSmallestFeature(hits, areaById, turf);
 
-    const id = String(f.properties?.ava_id ?? f.id ?? "");
+    const id = String(chosen.properties?.ava_id ?? chosen.id ?? "");
     const area = (id && areaById.get(id)) ?? turf.area(chosen);
     const center = getFeatureCenter(chosen, turf);
 
