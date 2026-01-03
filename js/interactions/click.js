@@ -25,7 +25,7 @@ function pickSmallestFeature(features, areaById, turf) {
   let bestArea = Infinity;
 
   for (const f of features) {
-    const id = String(f.id ?? "");
+    const id = String(f.properties?.ava_id ?? f.id ?? "");
     const a = (id && areaById.get(id)) ?? turf.area(f);
     if (a < bestArea) {
       bestArea = a;
@@ -100,7 +100,7 @@ export async function attachClick(map, turf, ids, areaById) {
 
     const chosen = pickSmallestFeature(hits, areaById, turf);
 
-    const id = String(chosen.id ?? "");
+    const id = String(f.properties?.ava_id ?? f.id ?? "");
     const area = (id && areaById.get(id)) ?? turf.area(chosen);
     const center = getFeatureCenter(chosen, turf);
 
