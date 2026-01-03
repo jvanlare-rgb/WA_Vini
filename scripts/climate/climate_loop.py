@@ -155,15 +155,15 @@ def main():
             print(f"\n[{i}/{len(months)}] Month {ym}: extracting + opening rasters...")
 
             month_dir = td / ym
-                try:
-                    tmean_nc = extract_nc(tmean_zip, month_dir / "tmean")
-                    ppt_nc   = extract_nc(ppt_zip,   month_dir / "ppt")
-                except zipfile.BadZipFile as e:
-                    print(f"[{ym}] ❌ Bad zip file, skipping month: {e}")
-                    continue
-                except Exception as e:
-                    print(f"[{ym}] ❌ Unexpected error opening zips: {e}")
-                    continue
+            try:
+                tmean_nc = extract_nc(tmean_zip, month_dir / "tmean")
+                ppt_nc   = extract_nc(ppt_zip,   month_dir / "ppt")
+            except zipfile.BadZipFile as e:
+                print(f"[{ym}] ❌ Bad zip file, skipping month: {e}")
+                continue
+            except Exception as e:
+                print(f"[{ym}] ❌ Unexpected error opening zips: {e}")
+                continue
 
             tmean_da = load_da(tmean_nc)
             ppt_da   = load_da(ppt_nc)
