@@ -71,6 +71,29 @@ html, body {
   margin-bottom: 12px;
 }
 
+.unit-toggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.toggle-btn.active {
+  background: rgba(255,255,255,0.16);
+  opacity: 1;
+}
+
 .panel h2 {
   font-size: 18px;
   margin: 0;
