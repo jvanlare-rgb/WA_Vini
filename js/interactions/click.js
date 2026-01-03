@@ -43,6 +43,9 @@ function getFeatureCenter(feature, turf) {
   }
 }
 
+function cToF(c) { return (c * 9) / 5 + 32; }
+function mmToIn(mm) { return mm / 25.4; } // 25.4 mm per inch
+
 function fmt(n, digits = 1) {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
   return Number(n).toFixed(digits);
