@@ -72,22 +72,6 @@ export async function attachClick(map, turf, ids, areaById) {
   const closeBtn = document.getElementById("panelClose");
   if (closeBtn && panel) closeBtn.onclick = () => panel.classList.add("hidden");
 
-  const metricBtn = document.getElementById("unitMetric");
-  const imperialBtn = document.getElementById("unitImperial");
-
-  function setUnit(mode) {
-    unitMode = mode;
-  
-    metricBtn?.classList.toggle("active", mode === "metric");
-    imperialBtn?.classList.toggle("active", mode === "imperial");
-  
-    if (currentAva) renderPanel(currentAva);
-  }
-
-  metricBtn?.addEventListener("click", () => setUnit("metric"));
-  imperialBtn?.addEventListener("click", () => setUnit("imperial"));
-
-
   function renderPanel(d) {
     if (!d || !panel) return;
   
@@ -127,6 +111,23 @@ export async function attachClick(map, turf, ids, areaById) {
   
     panel.classList.remove("hidden");
   }
+
+
+  const metricBtn = document.getElementById("unitMetric");
+  const imperialBtn = document.getElementById("unitImperial");
+
+  function setUnit(mode) {
+    unitMode = mode;
+  
+    metricBtn?.classList.toggle("active", mode === "metric");
+    imperialBtn?.classList.toggle("active", mode === "imperial");
+  
+    if (currentAva) renderPanel(currentAva);
+  }
+
+  metricBtn?.addEventListener("click", () => setUnit("metric"));
+  imperialBtn?.addEventListener("click", () => setUnit("imperial"));
+
   
   function openPanelForAva(ava_id) {
     const d = panelDataById[String(ava_id)];
