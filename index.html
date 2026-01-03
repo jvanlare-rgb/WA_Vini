@@ -23,5 +23,43 @@
   </div>
 
     <script type="module" src="./js/main.js"></script>
+
+    <div id="infoPanel" class="panel hidden">
+  <div class="panel-header">
+    <div>
+      <h2 id="panelTitle">AVA Name</h2>
+      <div id="panelPeriod" class="muted">1981–2024</div>
+    </div>
+    <button id="panelClose" class="icon-btn" aria-label="Close">×</button>
+  </div>
+
+  <div class="panel-grid">
+    <div class="stat">
+      <div class="label">Avg Temp (all months)</div>
+      <div id="tAll" class="value">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Avg Temp (summer)</div>
+      <div id="tSummer" class="value">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Avg Annual Precip</div>
+      <div id="pAnnual" class="value">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Temp Trend</div>
+      <div id="tTrend" class="value">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Precip Trend</div>
+      <div id="pTrend" class="value">—</div>
+    </div>
+  </div>
+
+  <div class="panel-footer">
+    <button id="detailsBtn" class="primary">View detailed climate</button>
+  </div>
+</div>
+
 </body>
 </html>
