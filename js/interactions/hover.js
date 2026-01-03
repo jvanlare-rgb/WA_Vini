@@ -61,10 +61,22 @@ export function attachHover(map, state, ids) {
         })
       : null;
 
+        // --- area display (km² + mi²) ---
+    const avaId = String(chosen.properties?.ava_id ?? chosen.id ?? "");
+    const areaSqM = state.areaById.get(avaId) ?? turf.area(chosen);
+    
+    const km2 = areaSqM / 1_000_000;
+    const mi2 = areaSqM / 2_589_988.110336;
+    
+    const km2Txt = km2.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    const mi2Txt = mi2.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+
     info.innerHTML = `
       <div>AVA: ${name}</div>
       <div style="opacity:0.85; font-size:0.9em;">
         Date created: ${createdPretty ?? createdRaw ?? "Unknown"}
+        <br/>Area: ${km2Txt} km<sup>2</sup> (${mi2Txt} mi<sup>2</sup>)
       </div>
     `;
   });
