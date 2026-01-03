@@ -54,6 +54,9 @@ function fmt(n, digits = 1) {
 export async function attachClick(map, turf, ids, areaById) {
   const { FILL_ID } = ids;
 
+  let unitMode = "metric"; // "metric" or "imperial"
+  let currentAva = null;
+
   // Load panel data once
   let panelDataById = {};
   try {
@@ -69,28 +72,69 @@ export async function attachClick(map, turf, ids, areaById) {
   const closeBtn = document.getElementById("panelClose");
   if (closeBtn && panel) closeBtn.onclick = () => panel.classList.add("hidden");
 
-  function openPanelForAva(ava_id) {
-    const d = panelDataById[String(ava_id)];
-    if (!d || !panel) return;
+  const metricBtn = document.getElementById("unitMetric");
+  const imperialBtn = document.getElementById("unitImperial");
 
+  function setUnit(mode) {
+    unitMode = mode;
+  
+    metricBtn?.classList.toggle("active", mode === "metric");
+    imperialBtn?.classList.toggle("active", mode === "imperial");
+  
+    if (currentAva) renderPanel(currentAva);
+  }
+
+  metricBtn?.addEventListener("click", () => setUnit("metric"));
+  imperialBtn?.addEventListener("click", () => setUnit("imperial"));
+
+
+  function renderPanel(d) {
+    if (!d || !panel) return;
+  
+    const metric = unitMode === "metric";
+  
+    const tAll = metric ? d.tmean_all_c : cToF(d.tmean_all_c);
+    const tSummer = metric ? d.tmean_summer_c : cToF(d.tmean_summer_c);
+  
+    const pptAnnual = metric ? d.ppt_annual_mm : mmToIn(d.ppt_annual_mm);
+  
+    const tTrend = metric ? d.tmean_trend_c_decade : cToF(d.tmean_trend_c_decade) - cToF(0); 
+    // simpler: multiply by 9/5
+    const tTrendFixed = metric ? d.tmean_trend_c_decade : d.tmean_trend_c_decade * 9/5;
+  
+    const pTrend = metric ? d.ppt_trend_mm_decade : mmToIn(d.ppt_trend_mm_decade);
+  
     document.getElementById("panelTitle").textContent = d.name ?? "AVA";
     document.getElementById("panelPeriod").textContent = d.period ?? "";
-
-    document.getElementById("tAll").textContent = `${fmt(d.tmean_all_c, 1)} °C`;
-    document.getElementById("tSummer").textContent = `${fmt(d.tmean_summer_c, 1)} °C`;
-    document.getElementById("pAnnual").textContent = `${fmt(d.ppt_annual_mm, 0)} mm/yr`;
-
+  
+    document.getElementById("tAll").textContent =
+      `${fmt(tAll, 1)} ${metric ? "°C" : "°F"}`;
+    document.getElementById("tSummer").textContent =
+      `${fmt(tSummer, 1)} ${metric ? "°C" : "°F"}`;
+  
+    document.getElementById("pAnnual").textContent =
+      `${fmt(pptAnnual, metric ? 0 : 1)} ${metric ? "mm/yr" : "in/yr"}`;
+  
     document.getElementById("tTrend").textContent =
-      `${fmt(d.tmean_trend_c_decade, 2)} °C/decade`;
+      `${fmt(tTrendFixed, 2)} ${metric ? "°C" : "°F"}/decade`;
+  
     document.getElementById("pTrend").textContent =
-      `${fmt(d.ppt_trend_mm_decade, 0)} mm/decade`;
-
+      `${fmt(pTrend, metric ? 0 : 2)} ${metric ? "mm" : "in"}/decade`;
+  
     document.getElementById("detailsBtn").onclick = () => {
       window.location.href = `details.html?ava_id=${encodeURIComponent(d.ava_id)}`;
     };
-
+  
     panel.classList.remove("hidden");
   }
+  
+  function openPanelForAva(ava_id) {
+    const d = panelDataById[String(ava_id)];
+    if (!d) return;
+    currentAva = d;
+    renderPanel(d);
+  }
+
 
   map.on("click", (e) => {
     const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
