@@ -10,6 +10,8 @@
 
 <body>
   <div class="container">
+
+    <!-- Top bar -->
     <div class="topbar">
       <div class="breadcrumb">
         <a href="./index.html">← Back to map</a>
@@ -22,6 +24,7 @@
       </div>
     </div>
 
+    <!-- Header -->
     <div class="header">
       <div>
         <h1 id="title">Climate detail</h1>
@@ -33,6 +36,8 @@
     </div>
 
     <div class="grid">
+
+      <!-- Overview KPI card -->
       <div class="card">
         <h2>Overview</h2>
         <p class="notice" id="overviewNote">Loading CSV…</p>
@@ -56,64 +61,89 @@
           </div>
         </div>
 
-        <p class="small" id="kpiFoot" style="margin-top:10px;">
+        <p class="small" style="margin-top:10px;">
           These are computed directly from <code>ava_prism_monthly_stats.csv</code>.
         </p>
       </div>
 
+      <!-- Monthly normals table (static: no dropdown) -->
       <div class="card">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+        <div class="card-header-row">
           <div>
-            <h2 style="margin-bottom:4px;">Climate view</h2>
-            <p class="notice" id="viewNote" style="margin:0;">Choose a view to explore the data.</p>
+            <h2 style="margin:0;">Monthly normals</h2>
+            <p class="notice" id="monthlyNote" style="margin:8px 0 0 0;">
+              Computing monthly averages…
+            </p>
           </div>
-      
-          <div style="display:flex; align-items:center; gap:10px;">
+        </div>
+
+        <div class="table-wrap" style="margin-top:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Temp mean</th>
+                <th>Temp min</th>
+                <th>Temp max</th>
+                <th>Precip mean</th>
+                <th>Precip min</th>
+                <th>Precip max</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Visuals section -->
+      <div class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 style="margin:0;">Visuals</h2>
+            <p class="notice" id="visualNote" style="margin:8px 0 0 0;">
+              Yearly view shows annual precipitation totals and yearly average temperature.
+            </p>
+          </div>
+
+          <div class="controls">
             <span class="small">View</span>
-            <select id="viewSelect" class="select">
-              <option value="monthly" selected>Monthly normals</option>
-              <option value="yearly">Yearly averages</option>
-            </select>
-      
-            <span class="small" style="margin-left:6px;">Metric</span>
-            <select id="seriesSelect" class="select">
-              <option value="tmean" selected>Temperature</option>
-              <option value="ppt">Precipitation</option>
+            <select id="chartSelect" class="select">
+              <option value="yearly" selected>Yearly</option>
+              <option value="1">Jan</option>
+              <option value="2">Feb</option>
+              <option value="3">Mar</option>
+              <option value="4">Apr</option>
+              <option value="5">May</option>
+              <option value="6">Jun</option>
+              <option value="7">Jul</option>
+              <option value="8">Aug</option>
+              <option value="9">Sep</option>
+              <option value="10">Oct</option>
+              <option value="11">Nov</option>
+              <option value="12">Dec</option>
             </select>
           </div>
         </div>
-      
-        <!-- YEARLY CHART -->
-        <div id="yearlySection" style="display:none; margin-top:14px;">
-          <p class="notice" id="yearlyNote">Computing yearly averages…</p>
-          <div class="canvas-wrap">
-            <canvas id="yearlyCanvas" width="1000" height="420"></canvas>
+
+        <div class="charts-grid" style="margin-top:12px;">
+          <div class="chart-card">
+            <div class="chart-title" id="tempChartTitle">Temperature</div>
+            <div class="canvas-wrap">
+              <canvas id="tempCanvas" width="900" height="420"></canvas>
+            </div>
+            <div class="chart-sub" id="tempChartSub">—</div>
           </div>
-          <p class="small" id="yearlyRange"></p>
-        </div>
-      
-        <!-- MONTHLY TABLE -->
-        <div id="monthlySection" style="margin-top:14px;">
-          <p class="notice" id="monthlyNote">Computing monthly averages…</p>
-      
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Temp mean</th>
-                  <th>Temp min</th>
-                  <th>Temp max</th>
-                  <th>Precip mean</th>
-                  <th>Precip min</th>
-                  <th>Precip max</th>
-                </tr>
-              </thead>
-              <tbody id="monthlyBody"></tbody>
-            </table>
+
+          <div class="chart-card">
+            <div class="chart-title" id="pptChartTitle">Precipitation</div>
+            <div class="canvas-wrap">
+              <canvas id="pptCanvas" width="900" height="420"></canvas>
+            </div>
+            <div class="chart-sub" id="pptChartSub">—</div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -134,14 +164,13 @@
       return Number(n).toFixed(digits);
     }
 
-    // Fast CSV parse for simple, comma-separated data (no quoted commas)
     function parseCsv(text) {
       const lines = text.trim().split(/\r?\n/);
       const header = lines.shift().split(",").map(s => s.trim());
       return lines
         .filter(l => l.trim().length)
         .map(line => {
-          const cols = line.split(","); // safe for your file (no quoted commas)
+          const cols = line.split(",");
           const row = {};
           header.forEach((h, i) => row[h] = cols[i]);
           return row;
@@ -149,15 +178,15 @@
     }
 
     function ymToYearMonth(ym) {
-      // ym like 198101
       const s = String(ym);
-      const year = Number(s.slice(0,4));
-      const month = Number(s.slice(4,6)); // 1..12
+      const year = Number(s.slice(0, 4));
+      const month = Number(s.slice(4, 6));
       return { year, month };
     }
 
     // ---------------- state ----------------
-    let unitMode = "metric";
+    let unitMode = "metric"; // metric or imperial
+
     const avaId = getParam("ava_id");
     const nameFromUrl = getParam("name");
     const periodFromUrl = getParam("period");
@@ -171,136 +200,286 @@
       unitMode = mode;
       $("unitMetric")?.classList.toggle("active", mode === "metric");
       $("unitImperial")?.classList.toggle("active", mode === "imperial");
-
       if (window.__derived) renderAll(window.__derived);
     }
     $("unitMetric")?.addEventListener("click", () => setUnit("metric"));
     $("unitImperial")?.addEventListener("click", () => setUnit("imperial"));
 
     // ---------------- compute derived views ----------------
-  function computeDerived(rows) {
-    // Parse rows into numeric monthly records
-    const parsed = rows.map(r => {
-      const { year, month } = ymToYearMonth(r.ym);
-      return {
-        ava_id: r.ava_id,
-        name: r.name,
-        year,
-        month,
-        tmean_mean: Number(r.tmean_mean),
-        tmean_min:  Number(r.tmean_min),
-        tmean_max:  Number(r.tmean_max),
-        ppt_mean:   Number(r.ppt_mean),
-        ppt_min:    Number(r.ppt_min),
-        ppt_max:    Number(r.ppt_max)
-      };
-    });
-  
-    const years = parsed.map(r => r.year);
-    const minYear = Math.min(...years);
-    const maxYear = Math.max(...years);
-  
-    // ---- Monthly normals (Jan–Dec averages across years)
-    const byMonth = new Map();
-    for (const r of parsed) {
-      if (!byMonth.has(r.month)) {
-        byMonth.set(r.month, {
-          month: r.month,
-          n: 0,
-          tmean_mean: 0,
-          tmean_min: 0,
-          tmean_max: 0,
-          ppt_mean: 0,
-          ppt_min: 0,
-          ppt_max: 0
+    function computeDerived(rows) {
+      const parsed = rows.map(r => {
+        const { year, month } = ymToYearMonth(r.ym);
+        return {
+          ava_id: r.ava_id,
+          name: r.name,
+          year,
+          month,
+          tmean_mean: Number(r.tmean_mean),
+          tmean_min:  Number(r.tmean_min),
+          tmean_max:  Number(r.tmean_max),
+          ppt_mean:   Number(r.ppt_mean),
+          ppt_min:    Number(r.ppt_min),
+          ppt_max:    Number(r.ppt_max)
+        };
+      });
+
+      const years = parsed.map(r => r.year);
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
+
+      // Monthly normals (mean of each month across years)
+      const byMonth = new Map();
+      for (const r of parsed) {
+        if (!byMonth.has(r.month)) {
+          byMonth.set(r.month, {
+            month: r.month,
+            n: 0,
+            tmean_mean: 0, tmean_min: 0, tmean_max: 0,
+            ppt_mean: 0,   ppt_min: 0,   ppt_max: 0
+          });
+        }
+        const a = byMonth.get(r.month);
+        a.n++;
+        a.tmean_mean += r.tmean_mean;
+        a.tmean_min  += r.tmean_min;
+        a.tmean_max  += r.tmean_max;
+        a.ppt_mean   += r.ppt_mean;
+        a.ppt_min    += r.ppt_min;
+        a.ppt_max    += r.ppt_max;
+      }
+
+      const monthly = [];
+      for (let m = 1; m <= 12; m++) {
+        const a = byMonth.get(m);
+        if (!a) {
+          monthly.push({ month: m, n: 0 });
+          continue;
+        }
+        monthly.push({
+          month: m,
+          n: a.n,
+          tmean_mean: a.tmean_mean / a.n,
+          tmean_min:  a.tmean_min  / a.n,
+          tmean_max:  a.tmean_max  / a.n,
+          ppt_mean:   a.ppt_mean   / a.n,
+          ppt_min:    a.ppt_min    / a.n,
+          ppt_max:    a.ppt_max    / a.n
         });
       }
-      const a = byMonth.get(r.month);
-      a.n++;
-      a.tmean_mean += r.tmean_mean;
-      a.tmean_min  += r.tmean_min;
-      a.tmean_max  += r.tmean_max;
-      a.ppt_mean   += r.ppt_mean;
-      a.ppt_min    += r.ppt_min;
-      a.ppt_max    += r.ppt_max;
-    }
-  
-    const monthly = [];
-    for (let m = 1; m <= 12; m++) {
-      const a = byMonth.get(m);
-      if (!a) {
-        monthly.push({ month: m, n: 0 });
-        continue;
-      }
-      monthly.push({
-        month: m,
-        n: a.n,
-        tmean_mean: a.tmean_mean / a.n,
-        tmean_min:  a.tmean_min  / a.n,
-        tmean_max:  a.tmean_max  / a.n,
-        ppt_mean:   a.ppt_mean   / a.n,
-        ppt_min:    a.ppt_min    / a.n,
-        ppt_max:    a.ppt_max    / a.n
-      });
-    }
-  
-    // ---- KPIs
-    const avg = arr => arr.reduce((s,v)=>s+v,0) / (arr.length || 1);
-    const tmeanAll = avg(parsed.map(r => r.tmean_mean));
-    const tmeanSummer = avg(parsed.filter(r => [6,7,8].includes(r.month)).map(r => r.tmean_mean));
-    const pptMonthly = avg(parsed.map(r => r.ppt_mean));
-  
-    return {
-      ava_id: parsed[0]?.ava_id ?? avaId,
-      name: parsed[0]?.name ?? nameFromUrl ?? "",
-      minYear,
-      maxYear,
-      count: parsed.length,
-      parsed,
-      monthly,
-      kpis: { tmeanAll, tmeanSummer, pptMonthly }
-    };
-  }
 
+      // KPIs
+      const avg = (arr) => arr.reduce((s,v)=>s+v,0) / (arr.length || 1);
+      const tmeanAll = avg(parsed.map(r => r.tmean_mean));
+      const tmeanSummer = avg(parsed.filter(r => [6,7,8].includes(r.month)).map(r => r.tmean_mean));
+      const pptMonthly = avg(parsed.map(r => r.ppt_mean));
+
+      return {
+        ava_id: parsed[0]?.ava_id ?? avaId,
+        name: parsed[0]?.name ?? nameFromUrl ?? "",
+        minYear,
+        maxYear,
+        count: parsed.length,
+        parsed,
+        monthly,
+        kpis: { tmeanAll, tmeanSummer, pptMonthly }
+      };
+    }
 
     function computeYearly(parsedRows) {
-      // parsedRows are the numeric rows (with year/month numbers) for this AVA
-      const byYear = new Map(); // year -> accum
-    
+      const byYear = new Map();
       for (const r of parsedRows) {
         if (!byYear.has(r.year)) {
-          byYear.set(r.year, { year: r.year, n: 0, tmean: 0, ppt: 0 });
+          byYear.set(r.year, { year: r.year, n: 0, tmean_sum: 0, ppt_sum: 0 });
         }
         const a = byYear.get(r.year);
-        a.n += 1;
-        a.tmean += r.tmean_mean;  // monthly mean temp
-        a.ppt += r.ppt_mean;      // monthly mean precip
+        a.n++;
+        a.tmean_sum += r.tmean_mean; // avg temp = mean of monthly means
+        a.ppt_sum += r.ppt_mean;     // annual precip total = sum of monthly means
       }
-    
+
       const years = [...byYear.keys()].sort((a,b)=>a-b);
-    
-      // Yearly avg temp = average of monthly means
-      // Yearly precip: you can choose SUM (total annual) or AVG (avg monthly)
-      // Usually better: SUM for annual precip.
-      const series = years.map(y => {
+      return years.map(y => {
         const a = byYear.get(y);
         return {
           year: y,
-          tmean_c: a.tmean / a.n,
-          ppt_mm_annual: a.ppt,           // SUM of monthly means -> annual total (mm)
-          ppt_mm_monthly_avg: a.ppt / a.n // avg monthly precip (mm)
+          tmean_c: a.tmean_sum / a.n,
+          ppt_mm_annual: a.ppt_sum
         };
       });
-    
-      return series;
     }
 
+    function computeMonthSeries(parsedRows) {
+      // month -> [{year, tmean_c, ppt_mm}]
+      const map = new Map();
+      for (let m = 1; m <= 12; m++) map.set(m, []);
+
+      for (const r of parsedRows) {
+        map.get(r.month).push({
+          year: r.year,
+          tmean_c: r.tmean_mean,
+          ppt_mm: r.ppt_mean
+        });
+      }
+
+      // sort each month by year
+      for (let m = 1; m <= 12; m++) {
+        map.get(m).sort((a,b)=>a.year-b.year);
+      }
+      return map;
+    }
+
+    // ---------------- charts ----------------
+    function drawLineChart(canvas, points, opts) {
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const padL = 56, padR = 18, padT = 22, padB = 44;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      if (!points.length) return;
+
+      const xs = points.map(p => p.x);
+      const ys = points.map(p => p.y);
+
+      const xMin = Math.min(...xs), xMax = Math.max(...xs);
+      let yMin = Math.min(...ys), yMax = Math.max(...ys);
+
+      const yPad = (yMax - yMin) * 0.08 || 1;
+      yMin -= yPad;
+      yMax += yPad;
+
+      const xToPx = (x) => padL + ((x - xMin) / (xMax - xMin || 1)) * plotW;
+      const yToPx = (y) => padT + (1 - ((y - yMin) / (yMax - yMin || 1))) * plotH;
+
+      // grid + y labels
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "12px system-ui";
+
+      const steps = 5;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const yVal = yMin + (1 - t) * (yMax - yMin);
+        const yPx = padT + t * plotH;
+
+        ctx.beginPath();
+        ctx.moveTo(padL, yPx);
+        ctx.lineTo(W - padR, yPx);
+        ctx.stroke();
+
+        ctx.fillText(yVal.toFixed(opts.yDigits ?? 1), 8, yPx + 4);
+      }
+
+      // x labels
+      ctx.fillStyle = "rgba(255,255,255,0.60)";
+      const xLabels = [xMin, xMax];
+      const mid1 = Math.round(xMin + (xMax - xMin) * 0.33);
+      const mid2 = Math.round(xMin + (xMax - xMin) * 0.66);
+      xLabels.splice(1, 0, mid1, mid2);
+
+      for (const x of xLabels) {
+        const xPx = xToPx(x);
+        ctx.fillText(String(x), xPx - 12, H - 16);
+      }
+
+      // line
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(124,92,255,0.95)";
+      ctx.beginPath();
+      points.forEach((p, i) => {
+        const px = xToPx(p.x);
+        const py = yToPx(p.y);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      // title
+      ctx.fillStyle = "rgba(255,255,255,0.86)";
+      ctx.font = "13px system-ui";
+      ctx.fillText(opts.title ?? "", padL, 16);
+    }
+
+    function renderCharts(d) {
+      const metric = unitMode === "metric";
+      const sel = $("chartSelect").value;
+
+      const tempCanvas = $("tempCanvas");
+      const pptCanvas = $("pptCanvas");
+
+      if (sel === "yearly") {
+        $("visualNote").textContent = "Yearly view shows annual precipitation totals and yearly average temperature.";
+        $("tempChartTitle").textContent = "Temperature (yearly average)";
+        $("pptChartTitle").textContent = "Precipitation (annual total)";
+
+        const tempPoints = d.yearly.map(r => ({
+          x: r.year,
+          y: metric ? r.tmean_c : cToF(r.tmean_c)
+        }));
+        const pptPoints = d.yearly.map(r => ({
+          x: r.year,
+          y: metric ? r.ppt_mm_annual : mmToIn(r.ppt_mm_annual)
+        }));
+
+        $("tempChartSub").textContent = `${d.minYear}–${d.maxYear}`;
+        $("pptChartSub").textContent = `${d.minYear}–${d.maxYear}`;
+
+        drawLineChart(tempCanvas, tempPoints, {
+          title: `Yearly avg temp (${metric ? "°C" : "°F"})`,
+          yDigits: 1
+        });
+
+        drawLineChart(pptCanvas, pptPoints, {
+          title: `Annual precip (${metric ? "mm" : "in"})`,
+          yDigits: metric ? 0 : 1
+        });
+
+        return;
+      }
+
+      // Month selection (1..12): show that month across years
+      const m = Number(sel);
+      const monthName = MONTHS[m - 1];
+
+      $("visualNote").textContent = `${monthName} view shows that month’s values across years.`;
+      $("tempChartTitle").textContent = `Temperature (${monthName})`;
+      $("pptChartTitle").textContent = `Precipitation (${monthName})`;
+
+      const series = d.monthSeries.get(m) || [];
+
+      const tempPoints = series.map(r => ({
+        x: r.year,
+        y: metric ? r.tmean_c : cToF(r.tmean_c)
+      }));
+
+      const pptPoints = series.map(r => ({
+        x: r.year,
+        y: metric ? r.ppt_mm : mmToIn(r.ppt_mm)
+      }));
+
+      $("tempChartSub").textContent = `${d.minYear}–${d.maxYear}`;
+      $("pptChartSub").textContent = `${d.minYear}–${d.maxYear}`;
+
+      drawLineChart(tempCanvas, tempPoints, {
+        title: `${monthName} mean temp (${metric ? "°C" : "°F"})`,
+        yDigits: 1
+      });
+
+      drawLineChart(pptCanvas, pptPoints, {
+        title: `${monthName} precip (${metric ? "mm" : "in"})`,
+        yDigits: metric ? 0 : 2
+      });
+    }
 
     // ---------------- render ----------------
     function renderAll(d) {
       const metric = unitMode === "metric";
 
-      // Update header (if CSV has canonical name)
+      // header name
       if (d.name) {
         $("title").textContent = `Climate: ${d.name}`;
         $("crumbAva").textContent = d.name;
@@ -308,6 +487,7 @@
       $("metaAvaId").textContent = `ava_id: ${d.ava_id ?? "—"}`;
       $("metaPeriod").textContent = `period: ${d.minYear}–${d.maxYear}`;
 
+      // KPIs
       const tAll = metric ? d.kpis.tmeanAll : cToF(d.kpis.tmeanAll);
       const tSummer = metric ? d.kpis.tmeanSummer : cToF(d.kpis.tmeanSummer);
       const ppt = metric ? d.kpis.pptMonthly : mmToIn(d.kpis.pptMonthly);
@@ -320,15 +500,17 @@
       $("overviewNote").textContent =
         `Rows: ${d.count.toLocaleString()} monthly records. Period: ${d.minYear}–${d.maxYear}.`;
 
-      // Monthly table
+      // Monthly normals table (static)
       const body = $("monthlyBody");
       body.innerHTML = "";
 
       for (const r of d.monthly) {
         const m = r.month;
+
         const tmean = metric ? r.tmean_mean : cToF(r.tmean_mean);
         const tmin  = metric ? r.tmean_min  : cToF(r.tmean_min);
         const tmax  = metric ? r.tmean_max  : cToF(r.tmean_max);
+
         const pmean = metric ? r.ppt_mean   : mmToIn(r.ppt_mean);
         const pmin  = metric ? r.ppt_min    : mmToIn(r.ppt_min);
         const pmax  = metric ? r.ppt_max    : mmToIn(r.ppt_max);
@@ -347,7 +529,9 @@
       }
 
       $("monthlyNote").textContent = "Monthly normals computed by averaging each month across all years.";
-      applyView();
+
+      // Charts
+      renderCharts(d);
     }
 
     // ---------------- load ----------------
@@ -361,6 +545,7 @@
       try {
         const res = await fetch("./assets/data/ava_prism_monthly_stats.csv");
         if (!res.ok) throw new Error("CSV fetch failed: " + res.status);
+
         const text = await res.text();
         const all = parseCsv(text);
 
@@ -373,145 +558,23 @@
 
         const derived = computeDerived(rows);
         derived.yearly = computeYearly(derived.parsed);
+        derived.monthSeries = computeMonthSeries(derived.parsed);
+
         window.__derived = derived;
+
+        // wire dropdown once
+        $("chartSelect")?.addEventListener("change", () => {
+          if (window.__derived) renderCharts(window.__derived);
+        });
+
         renderAll(derived);
+
       } catch (e) {
         console.warn(e);
         $("overviewNote").textContent = "Failed to load / parse CSV. Check console.";
         $("monthlyNote").textContent = "Failed to load.";
+        $("visualNote").textContent = "Failed to load charts.";
       }
-    }
-
-    const viewSelect = document.getElementById("viewSelect");
-    const seriesSelect = document.getElementById("seriesSelect");
-    
-    function applyView() {
-      const view = viewSelect.value;
-      const series = seriesSelect.value;
-    
-      const monthlySection = document.getElementById("monthlySection");
-      const yearlySection = document.getElementById("yearlySection");
-    
-      if (!window.__derived) return;
-    
-      if (view === "yearly") {
-        monthlySection.style.display = "none";
-        yearlySection.style.display = "block";
-    
-        const d = window.__derived;
-        const metric = unitMode === "metric";
-        const canvas = document.getElementById("yearlyCanvas");
-    
-        // Build points
-        let points = [];
-        let title = "";
-    
-        if (series === "tmean") {
-          points = d.yearly.map(r => ({
-            x: r.year,
-            y: metric ? r.tmean_c : cToF(r.tmean_c)
-          }));
-          title = `Yearly avg temperature (${metric ? "°C" : "°F"})`;
-          document.getElementById("yearlyNote").textContent = "Each point is the yearly average of monthly mean temperature.";
-          document.getElementById("yearlyRange").textContent = `${d.minYear}–${d.maxYear}`;
-          drawLineChart(canvas, points, { title, yDigits: 1 });
-        } else {
-          // Precip: use annual total (sum of monthly means)
-          points = d.yearly.map(r => ({
-            x: r.year,
-            y: metric ? r.ppt_mm_annual : mmToIn(r.ppt_mm_annual)
-          }));
-          title = `Yearly total precipitation (${metric ? "mm" : "in"})`;
-          document.getElementById("yearlyNote").textContent = "Each point is the annual total (sum across months).";
-          document.getElementById("yearlyRange").textContent = `${d.minYear}–${d.maxYear}`;
-          drawLineChart(canvas, points, { title, yDigits: metric ? 0 : 1 });
-        }
-    
-      } else {
-        yearlySection.style.display = "none";
-        monthlySection.style.display = "block";
-      }
-    }
-    
-    viewSelect?.addEventListener("change", applyView);
-    seriesSelect?.addEventListener("change", applyView);
-
-
-    function drawLineChart(canvas, points, opts) {
-      const ctx = canvas.getContext("2d");
-      const W = canvas.width, H = canvas.height;
-    
-      // Clear
-      ctx.clearRect(0, 0, W, H);
-    
-      const padL = 56, padR = 18, padT = 18, padB = 42;
-      const plotW = W - padL - padR;
-      const plotH = H - padT - padB;
-    
-      const xs = points.map(p => p.x);
-      const ys = points.map(p => p.y);
-    
-      const xMin = Math.min(...xs), xMax = Math.max(...xs);
-      let yMin = Math.min(...ys), yMax = Math.max(...ys);
-    
-      // Add a little padding to y range
-      const yPad = (yMax - yMin) * 0.08 || 1;
-      yMin -= yPad;
-      yMax += yPad;
-    
-      const xToPx = (x) => padL + ((x - xMin) / (xMax - xMin || 1)) * plotW;
-      const yToPx = (y) => padT + (1 - ((y - yMin) / (yMax - yMin || 1))) * plotH;
-    
-      // Background grid
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = "rgba(255,255,255,0.10)";
-      ctx.fillStyle = "rgba(255,255,255,0.75)";
-      ctx.font = "12px system-ui";
-    
-      // Y grid (5 lines)
-      const steps = 5;
-      for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const yVal = yMin + (1 - t) * (yMax - yMin);
-        const yPx = padT + t * plotH;
-    
-        ctx.beginPath();
-        ctx.moveTo(padL, yPx);
-        ctx.lineTo(W - padR, yPx);
-        ctx.stroke();
-    
-        ctx.fillText(yVal.toFixed(opts.yDigits ?? 1), 8, yPx + 4);
-      }
-    
-      // X labels: start + end + a few in between
-      ctx.fillStyle = "rgba(255,255,255,0.65)";
-      const xLabels = [xMin, xMax];
-      const mid1 = Math.round(xMin + (xMax - xMin) * 0.33);
-      const mid2 = Math.round(xMin + (xMax - xMin) * 0.66);
-      xLabels.splice(1, 0, mid1, mid2);
-    
-      for (const x of xLabels) {
-        const xPx = xToPx(x);
-        ctx.fillText(String(x), xPx - 12, H - 16);
-      }
-    
-      // Line
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(124,92,255,0.95)";
-      ctx.beginPath();
-      points.forEach((p, i) => {
-        const px = xToPx(p.x);
-        const py = yToPx(p.y);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      });
-      ctx.stroke();
-    
-      // Title
-      ctx.fillStyle = "rgba(255,255,255,0.85)";
-      ctx.font = "13px system-ui";
-      ctx.fillText(opts.title ?? "", padL, 16);
     }
 
     init();
