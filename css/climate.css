@@ -202,3 +202,24 @@ tbody tr:hover td{
   color: rgba(255,255,255,.86);
   font-size: 12px;
 }
+
+.select{
+  border:1px solid var(--border);
+  background: rgba(255,255,255,.03);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  outline: none;
+}
+.select:focus{
+  border-color: var(--border2);
+}
+
+.canvas-wrap{
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(0,0,0,.12);
+}
+canvas{ display:block; width:100%; height:auto; }
