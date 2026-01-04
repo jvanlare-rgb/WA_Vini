@@ -196,4 +196,6 @@ export async function attachClick(map, turf, ids, areaById) {
       console.warn("Failed to load vineyards for", avaId, err);
       setVineyards(map, { type: "FeatureCollection", features: [] });
     }
-});
+    
+  });
+}
