@@ -155,7 +155,7 @@ export async function attachClick(map, turf, ids, areaById) {
   }
 
 
-  map.on("click", (e) => {
+  map.on("click", async (e) => {
     const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
 
     if (!hits.length) {
@@ -188,10 +188,7 @@ export async function attachClick(map, turf, ids, areaById) {
     const avaId = chosen.properties?.ava_id;
     if (avaId) openPanelForAva(avaId);
 
-    // 1) Open your stats panel (what you already do)
-    openPanelForAva(avaId);
-
-  // 2) Load + show vineyards
+    // 2) Load + show vineyards
     try {
       const vineyards = await loadVineyardsForAva(avaId);
       setVineyards(map, vineyards);
