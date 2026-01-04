@@ -1,0 +1,22 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
+>
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#2b2b2b"/>
+
+  <!-- Grapes -->
+  <circle cx="26" cy="28" r="7" fill="#6b3fa0"/>
+  <circle cx="38" cy="28" r="7" fill="#6b3fa0"/>
+  <circle cx="32" cy="38" r="7" fill="#6b3fa0"/>
+  <circle cx="26" cy="40" r="7" fill="#6b3fa0"/>
+  <circle cx="38" cy="40" r="7" fill="#6b3fa0"/>
+
+  <!-- Leaf -->
+  <path
+    d="M32 14 C38 12, 44 16, 40 20 C36 24, 28 22, 32 14 Z"
+    fill="#4caf50"
+  />
+</svg>
