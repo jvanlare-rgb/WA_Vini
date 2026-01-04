@@ -1,2 +1,94 @@
-.picture{
-  
+/* -------- Reset / Base -------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #0f0f0f;
+  color: #eaeaea;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* -------- Layout -------- */
+.about-container {
+  max-width: 900px;
+  width: 90%;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 40px;
+  padding: 40px;
+}
+
+/* -------- Image -------- */
+.image-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.image-wrapper img {
+  width: 260px;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* -------- Text -------- */
+.content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b5b5b5;
+  margin-bottom: 24px;
+}
+
+.bio {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #d8d8d8;
+  margin-bottom: 28px;
+}
+
+/* -------- Links -------- */
+.links {
+  display: flex;
+  gap: 18px;
+}
+
+.links a {
+  text-decoration: none;
+  font-size: 0.95rem;
+  color: #a78bfa; /* soft purple */
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.links a:hover {
+  color: #c4b5fd;
+  border-color: #c4b5fd;
+}
+
+/* -------- Responsive -------- */
+@media (max-width: 720px) {
+  .about-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .links {
+    justify-content: center;
+  }
+}
