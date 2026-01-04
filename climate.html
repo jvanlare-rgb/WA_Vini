@@ -14,41 +14,297 @@
   </style>
 </head>
 <body>
-  <h1>AVA Climate Detail</h1>
-  <p class="muted" id="subtitle"></p>
+  <div class="container">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="./index.html">← Back to map</a>
+        <span id="crumbAva" class="badge">AVA</span>
+      </div>
 
-  <div class="card">
-    <div id="content">Loading…</div>
+      <div class="unit-toggle">
+        <button id="unitMetric" class="toggle-btn active" type="button">°C / mm</button>
+        <button id="unitImperial" class="toggle-btn" type="button">°F / in</button>
+      </div>
+    </div>
+
+    <div class="header">
+      <div class="title-wrap">
+        <h1 id="title">Climate detail</h1>
+        <div class="subtitle">
+          <span id="metaAvaId" class="badge">ava_id: —</span>
+          <span id="metaPeriod" class="badge" style="margin-left:8px;">period: —</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card span12">
+        <h2>Summary</h2>
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Avg Temp (all months)</div>
+            <div id="s_tAll" class="value">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Avg Temp (summer)</div>
+            <div id="s_tSummer" class="value">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Avg Annual Precip</div>
+            <div id="s_pAnnual" class="value">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Temp Trend</div>
+            <div id="s_tTrend" class="value">—</div>
+          </div>
+        </div>
+        <p class="notice" id="summaryNote" style="margin:10px 2px 0;">
+          Loading panel stats…
+        </p>
+      </div>
+
+      <div class="card span12">
+        <h2>Monthly normals</h2>
+        <p class="notice" id="detailNote" style="margin:0 2px 12px;">
+          Loading detailed dataset…
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Avg Temp</th>
+                <th>Min Temp</th>
+                <th>Max Temp</th>
+                <th>Precip</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyBody">
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <p style="margin-top:16px;">
-    <a href="./index.html">← Back to map</a>
-  </p>
-
   <script>
+    // ---------- helpers ----------
+    const $ = (id) => document.getElementById(id);
+
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);
     }
 
-    const avaId = getParam("ava_id");
-    const avaName = getParam("name");
-
-    document.getElementById("subtitle").textContent =
-      avaName ? `${avaName} (${avaId || "unknown"})` : (avaId ? avaId : "No AVA selected");
-
-    // TODO: replace this with your real data load:
-    // - fetch a JSON summary for the AVA
-    // - or load charts from a precomputed file
-    // Example placeholder:
-    const el = document.getElementById("content");
-    if (!avaId) {
-      el.innerHTML = "<b>No ava_id provided.</b><br/>Go back to the map and click an AVA, then use the button.";
-    } else {
-      el.innerHTML = `
-        <b>Selected AVA:</b> ${avaName ? avaName : ""}<br/>
-        <b>ava_id:</b> ${avaId}<br/><br/
-      `;
+    function cToF(c) { return (c * 9) / 5 + 32; }
+    function mmToIn(mm) { return mm / 25.4; }
+    function fmt(n, digits = 1) {
+      if (n === null || n === undefined || Number.isNaN(n)) return "—";
+      return Number(n).toFixed(digits);
     }
+
+    // Basic CSV parser for simple, comma-separated numeric tables
+    function parseCsv(text) {
+      const lines = text.trim().split(/\r?\n/);
+      const header = lines.shift().split(",").map(s => s.trim());
+      return lines
+        .filter(l => l.trim().length)
+        .map(line => {
+          const cols = line.split(",").map(s => s.trim());
+          const row = {};
+          header.forEach((h, i) => row[h] = cols[i]);
+          return row;
+        });
+    }
+
+    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    // ---------- state ----------
+    let unitMode = "metric";
+    const avaId = getParam("ava_id");
+    const nameFromUrl = getParam("name");
+    const periodFromUrl = getParam("period");
+
+    // ---------- init header ----------
+    $("metaAvaId").textContent = `ava_id: ${avaId ?? "—"}`;
+    $("metaPeriod").textContent = `period: ${periodFromUrl ?? "—"}`;
+    $("title").textContent = nameFromUrl ? `Climate: ${nameFromUrl}` : "Climate detail";
+    $("crumbAva").textContent = nameFromUrl ? nameFromUrl : "AVA";
+
+    // ---------- unit toggle ----------
+    function setUnit(mode) {
+      unitMode = mode;
+      $("unitMetric")?.classList.toggle("active", mode === "metric");
+      $("unitImperial")?.classList.toggle("active", mode === "imperial");
+      // re-render if we already have data
+      if (window.__panelRow) renderPanelSummary(window.__panelRow);
+      if (window.__monthlyRows) renderMonthlyTable(window.__monthlyRows);
+    }
+    $("unitMetric")?.addEventListener("click", () => setUnit("metric"));
+    $("unitImperial")?.addEventListener("click", () => setUnit("imperial"));
+
+    // ---------- renderers ----------
+    function renderPanelSummary(d) {
+      const metric = unitMode === "metric";
+
+      const tAll = metric ? d.tmean_all_c : cToF(d.tmean_all_c);
+      const tSummer = metric ? d.tmean_summer_c : cToF(d.tmean_summer_c);
+      const pAnnual = metric ? d.ppt_annual_mm : mmToIn(d.ppt_annual_mm);
+
+      // trend delta conversion: *9/5 (no +32)
+      const tTrend = metric ? d.tmean_trend_c_decade : (d.tmean_trend_c_decade * 9/5);
+
+      $("s_tAll").textContent = `${fmt(tAll, 1)} ${metric ? "°C" : "°F"}`;
+      $("s_tSummer").textContent = `${fmt(tSummer, 1)} ${metric ? "°C" : "°F"}`;
+      $("s_pAnnual").textContent = `${fmt(pAnnual, metric ? 0 : 1)} ${metric ? "mm/yr" : "in/yr"}`;
+      $("s_tTrend").textContent = `${fmt(tTrend, 2)} ${metric ? "°C" : "°F"}/decade`;
+
+      $("summaryNote").textContent = "Summary statistics shown for the selected AVA.";
+    }
+
+    // Expect monthly rows shaped like:
+    // { month: 1..12, tmean_c, tmin_c, tmax_c, ppt_mm }
+    // If your columns differ, just map them in normalizeMonthlyRows().
+    function renderMonthlyTable(rows) {
+      const metric = unitMode === "metric";
+      const body = $("monthlyBody");
+      body.innerHTML = "";
+
+      for (let m = 1; m <= 12; m++) {
+        const r = rows.find(x => Number(x.month) === m);
+        const tmean = r ? Number(r.tmean_c) : NaN;
+        const tmin  = r ? Number(r.tmin_c) : NaN;
+        const tmax  = r ? Number(r.tmax_c) : NaN;
+        const ppt   = r ? Number(r.ppt_mm) : NaN;
+
+        const tmeanOut = metric ? tmean : cToF(tmean);
+        const tminOut  = metric ? tmin  : cToF(tmin);
+        const tmaxOut  = metric ? tmax  : cToF(tmax);
+        const pptOut   = metric ? ppt   : mmToIn(ppt);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${MONTHS[m-1]}</td>
+          <td>${fmt(tmeanOut, 1)} ${metric ? "°C" : "°F"}</td>
+          <td>${fmt(tminOut, 1)} ${metric ? "°C" : "°F"}</td>
+          <td>${fmt(tmaxOut, 1)} ${metric ? "°C" : "°F"}</td>
+          <td>${fmt(pptOut, metric ? 0 : 2)} ${metric ? "mm" : "in"}</td>
+        `;
+        body.appendChild(tr);
+      }
+    }
+
+    // ---------- data loading ----------
+    async function loadPanelStats() {
+      const res = await fetch("./assets/data/ava_panel_stats.json");
+      const arr = await res.json();
+      return arr.find(d => String(d.ava_id) === String(avaId));
+    }
+
+    // Configure these to match whatever you generated.
+    // Option A: per-AVA JSON file with monthly normals
+    //   ./assets/data/climate_detail/<ava_id>.json
+    //
+    // Option B: per-AVA CSV file with monthly normals
+    //   ./assets/data/climate_detail/<ava_id>.csv
+    //
+    // The loader tries JSON first, then CSV.
+    async function loadMonthlyDetail() {
+      const base = `./assets/data/climate_detail/${encodeURIComponent(avaId)}`;
+
+      // Try JSON
+      try {
+        const rj = await fetch(`${base}.json`);
+        if (rj.ok) {
+          const data = await rj.json();
+          return normalizeMonthlyRows(data);
+        }
+      } catch {}
+
+      // Try CSV
+      try {
+        const rc = await fetch(`${base}.csv`);
+        if (rc.ok) {
+          const text = await rc.text();
+          const rows = parseCsv(text);
+          return normalizeMonthlyRows(rows);
+        }
+      } catch {}
+
+      return null;
+    }
+
+    function normalizeMonthlyRows(data) {
+      // Accept either:
+      // - array of rows
+      // - object with { monthly: [...] }
+      const rows = Array.isArray(data) ? data : (data?.monthly ?? []);
+
+      // Map common column names to what we render.
+      // Adjust these keys to match your actual columns once you paste a sample row.
+      return rows.map(r => {
+        // month can be "1".."12" or "Jan" etc.
+        let month = r.month ?? r.mon ?? r.Month ?? r.MONTH;
+        if (typeof month === "string") {
+          const idx = MONTHS.map(m => m.toLowerCase()).indexOf(month.slice(0,3).toLowerCase());
+          if (idx >= 0) month = idx + 1;
+        }
+
+        return {
+          month: Number(month),
+          tmean_c: Number(r.tmean_c ?? r.tmean ?? r.TMEAN_C ?? r.mean_c ?? r.avg_temp_c),
+          tmin_c:  Number(r.tmin_c  ?? r.tmin  ?? r.TMIN_C  ?? r.min_c  ?? r.min_temp_c),
+          tmax_c:  Number(r.tmax_c  ?? r.tmax  ?? r.TMAX_C  ?? r.max_c  ?? r.max_temp_c),
+          ppt_mm:  Number(r.ppt_mm  ?? r.ppt   ?? r.PPT_MM  ?? r.precip_mm ?? r.precip)
+        };
+      }).filter(r => Number.isFinite(r.month) && r.month >= 1 && r.month <= 12);
+    }
+
+    async function init() {
+      if (!avaId) {
+        $("summaryNote").textContent = "No ava_id provided. Go back to the map and click an AVA.";
+        $("detailNote").textContent = "No AVA selected.";
+        return;
+      }
+
+      // 1) Panel stats (already exists in your project)
+      try {
+        const d = await loadPanelStats();
+        if (d) {
+          window.__panelRow = d;
+          // Fill title/period from real data if URL didn’t include it
+          if (!nameFromUrl && d.name) $("title").textContent = `Climate: ${d.name}`;
+          if (!periodFromUrl && d.period) $("metaPeriod").textContent = `period: ${d.period}`;
+          $("crumbAva").textContent = d.name ?? $("crumbAva").textContent;
+
+          renderPanelSummary(d);
+        } else {
+          $("summaryNote").textContent = "Couldn’t find panel stats for this AVA id.";
+        }
+      } catch (e) {
+        console.warn(e);
+        $("summaryNote").textContent = "Failed to load panel stats.";
+      }
+
+      // 2) Detailed monthly data (you’ll point the path to your real output)
+      try {
+        const rows = await loadMonthlyDetail();
+        if (!rows || !rows.length) {
+          $("detailNote").textContent =
+            "No detailed monthly file found for this AVA yet. Add a per-AVA CSV/JSON under assets/data/climate_detail/.";
+          return;
+        }
+        window.__monthlyRows = rows;
+        $("detailNote").textContent = "Monthly normals loaded.";
+        renderMonthlyTable(rows);
+      } catch (e) {
+        console.warn(e);
+        $("detailNote").textContent = "Failed to load detailed dataset.";
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
