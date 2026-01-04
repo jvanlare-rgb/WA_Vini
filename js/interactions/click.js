@@ -124,7 +124,7 @@ export async function attachClick(map, turf, ids, areaById) {
       `${fmt(pTrend, metric ? 0 : 2)} ${metric ? "mm" : "in"}/decade`;
   
     document.getElementById("detailsBtn").onclick = () => {
-      window.location.href = `details.html?ava_id=${encodeURIComponent(d.ava_id)}`;
+      window.location.href = `climate.html?ava_id=${encodeURIComponent(d.ava_id)}`;
     };
   
     panel.classList.remove("hidden");
