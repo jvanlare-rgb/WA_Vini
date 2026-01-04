@@ -63,24 +63,56 @@
       </div>
 
       <div class="card">
-        <h2>Monthly normals (across all years)</h2>
-        <p class="notice" id="monthlyNote">Computing monthly averages…</p>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th>Temp mean</th>
-                <th>Temp min</th>
-                <th>Temp max</th>
-                <th>Precip mean</th>
-                <th>Precip min</th>
-                <th>Precip max</th>
-              </tr>
-            </thead>
-            <tbody id="monthlyBody"></tbody>
-          </table>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div>
+            <h2 style="margin-bottom:4px;">Climate view</h2>
+            <p class="notice" id="viewNote" style="margin:0;">Choose a view to explore the data.</p>
+          </div>
+      
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="small">View</span>
+            <select id="viewSelect" class="select">
+              <option value="monthly" selected>Monthly normals</option>
+              <option value="yearly">Yearly averages</option>
+            </select>
+      
+            <span class="small" style="margin-left:6px;">Metric</span>
+            <select id="seriesSelect" class="select">
+              <option value="tmean" selected>Temperature</option>
+              <option value="ppt">Precipitation</option>
+            </select>
+          </div>
+        </div>
+      
+        <!-- YEARLY CHART -->
+        <div id="yearlySection" style="display:none; margin-top:14px;">
+          <p class="notice" id="yearlyNote">Computing yearly averages…</p>
+          <div class="canvas-wrap">
+            <canvas id="yearlyCanvas" width="1000" height="420"></canvas>
+          </div>
+          <p class="small" id="yearlyRange"></p>
+        </div>
+      
+        <!-- MONTHLY TABLE -->
+        <div id="monthlySection" style="margin-top:14px;">
+          <p class="notice" id="monthlyNote">Computing monthly averages…</p>
+      
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Temp mean</th>
+                  <th>Temp min</th>
+                  <th>Temp max</th>
+                  <th>Precip mean</th>
+                  <th>Precip min</th>
+                  <th>Precip max</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
