@@ -63,4 +63,13 @@ map.on("load", async () => {
   // Interactions
   attachHover(map, state, CONFIG.ids);
   attachClick(map, turf, CONFIG.ids, state.areaById);
+
+  // Ensure vineyards draw ABOVE AVA fill + outline
+  if (map.getLayer("vineyards-fill")) {
+    map.moveLayer("vineyards-fill", CONFIG.ids.OUTLINE_ID);
+  }
+  if (map.getLayer("vineyards-outline")) {
+    map.moveLayer("vineyards-outline", CONFIG.ids.OUTLINE_ID);
+  }
+
 });
