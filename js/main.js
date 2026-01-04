@@ -39,7 +39,7 @@ map.on("load", async () => {
     type: "fill",
     source: "vineyards",
     paint: {
-      "fill-color": "#7CFC90",
+      "fill-color": "#c108ff",
       "fill-opacity": 0.22
     }
   });
@@ -49,7 +49,7 @@ map.on("load", async () => {
     type: "line",
     source: "vineyards",
     paint: {
-      "line-color": "#7CFC90",
+      "line-color": "#c108ff",
       "line-width": 1.2,
       "line-opacity": 0.65
     }
