@@ -122,9 +122,16 @@ export async function attachClick(map, turf, ids, areaById) {
   
     document.getElementById("pTrend").textContent =
       `${fmt(pTrend, metric ? 0 : 2)} ${metric ? "mm" : "in"}/decade`;
-  
+    
     document.getElementById("detailsBtn").onclick = () => {
-      window.location.href = `climate.html?ava_id=${encodeURIComponent(d.ava_id)}`;
+      const url =
+        `./climate.html?ava_id=${encodeURIComponent(d.ava_id)}` +
+        `&name=${encodeURIComponent(d.name ?? "")}` +
+        `&period=${encodeURIComponent(d.period ?? "")}`;
+      
+        window.location.href = url;
+      };
+
     };
   
     panel.classList.remove("hidden");
@@ -195,7 +202,6 @@ export async function attachClick(map, turf, ids, areaById) {
     } catch (err) {
       console.warn("Failed to load vineyards for", avaId, err);
       setVineyards(map, { type: "FeatureCollection", features: [] });
-    }
-    
+    }    
   });
 }
