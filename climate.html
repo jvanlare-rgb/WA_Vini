@@ -1,18 +1,14 @@
-<!-- climate.html -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AVA Climate Detail</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
-    .muted { opacity: 0.7; }
-    .card { max-width: 900px; padding: 16px 18px; border: 1px solid #ddd; border-radius: 12px; }
-    pre { white-space: pre-wrap; word-break: break-word; }
-  </style>
+  <link rel="stylesheet" href="./css/climate.css" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 </head>
+
 <body>
   <div class="container">
     <div class="topbar">
@@ -28,7 +24,7 @@
     </div>
 
     <div class="header">
-      <div class="title-wrap">
+      <div>
         <h1 id="title">Climate detail</h1>
         <div class="subtitle">
           <span id="metaAvaId" class="badge">ava_id: —</span>
@@ -38,51 +34,52 @@
     </div>
 
     <div class="grid">
-      <div class="card span12">
-        <h2>Summary</h2>
+      <div class="card">
+        <h2>Overview</h2>
+        <p class="notice" id="overviewNote">Loading CSV…</p>
+
         <div class="stats">
           <div class="stat">
             <div class="label">Avg Temp (all months)</div>
-            <div id="s_tAll" class="value">—</div>
+            <div id="kpi_tmean" class="value">—</div>
           </div>
           <div class="stat">
             <div class="label">Avg Temp (summer)</div>
-            <div id="s_tSummer" class="value">—</div>
+            <div id="kpi_tsummer" class="value">—</div>
           </div>
           <div class="stat">
-            <div class="label">Avg Annual Precip</div>
-            <div id="s_pAnnual" class="value">—</div>
+            <div class="label">Avg Monthly Precip</div>
+            <div id="kpi_ppt" class="value">—</div>
           </div>
           <div class="stat">
-            <div class="label">Temp Trend</div>
-            <div id="s_tTrend" class="value">—</div>
+            <div class="label">Data coverage</div>
+            <div id="kpi_cov" class="value">—</div>
           </div>
         </div>
-        <p class="notice" id="summaryNote" style="margin:10px 2px 0;">
-          Loading panel stats…
+
+        <p class="small" id="kpiFoot" style="margin-top:10px;">
+          These are computed directly from <code>ava_prism_monthly_stats.csv</code>.
         </p>
       </div>
 
-      <div class="card span12">
-        <h2>Monthly normals</h2>
-        <p class="notice" id="detailNote" style="margin:0 2px 12px;">
-          Loading detailed dataset…
-        </p>
+      <div class="card">
+        <h2>Monthly normals (across all years)</h2>
+        <p class="notice" id="monthlyNote">Computing monthly averages…</p>
 
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Month</th>
-                <th>Avg Temp</th>
-                <th>Min Temp</th>
-                <th>Max Temp</th>
-                <th>Precip</th>
+                <th>Temp mean</th>
+                <th>Temp min</th>
+                <th>Temp max</th>
+                <th>Precip mean</th>
+                <th>Precip min</th>
+                <th>Precip max</th>
               </tr>
             </thead>
-            <tbody id="monthlyBody">
-              <!-- populated by JS -->
-            </tbody>
+            <tbody id="monthlyBody"></tbody>
           </table>
         </div>
       </div>
@@ -90,8 +87,9 @@
   </div>
 
   <script>
-    // ---------- helpers ----------
+    // ---------------- utils ----------------
     const $ = (id) => document.getElementById(id);
+    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);
@@ -99,208 +97,218 @@
 
     function cToF(c) { return (c * 9) / 5 + 32; }
     function mmToIn(mm) { return mm / 25.4; }
-    function fmt(n, digits = 1) {
+
+    function fmt(n, digits=1) {
       if (n === null || n === undefined || Number.isNaN(n)) return "—";
       return Number(n).toFixed(digits);
     }
 
-    // Basic CSV parser for simple, comma-separated numeric tables
+    // Fast CSV parse for simple, comma-separated data (no quoted commas)
     function parseCsv(text) {
       const lines = text.trim().split(/\r?\n/);
       const header = lines.shift().split(",").map(s => s.trim());
       return lines
         .filter(l => l.trim().length)
         .map(line => {
-          const cols = line.split(",").map(s => s.trim());
+          const cols = line.split(","); // safe for your file (no quoted commas)
           const row = {};
           header.forEach((h, i) => row[h] = cols[i]);
           return row;
         });
     }
 
-    const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    function ymToYearMonth(ym) {
+      // ym like 198101
+      const s = String(ym);
+      const year = Number(s.slice(0,4));
+      const month = Number(s.slice(4,6)); // 1..12
+      return { year, month };
+    }
 
-    // ---------- state ----------
+    // ---------------- state ----------------
     let unitMode = "metric";
     const avaId = getParam("ava_id");
     const nameFromUrl = getParam("name");
     const periodFromUrl = getParam("period");
 
-    // ---------- init header ----------
     $("metaAvaId").textContent = `ava_id: ${avaId ?? "—"}`;
     $("metaPeriod").textContent = `period: ${periodFromUrl ?? "—"}`;
     $("title").textContent = nameFromUrl ? `Climate: ${nameFromUrl}` : "Climate detail";
     $("crumbAva").textContent = nameFromUrl ? nameFromUrl : "AVA";
 
-    // ---------- unit toggle ----------
     function setUnit(mode) {
       unitMode = mode;
       $("unitMetric")?.classList.toggle("active", mode === "metric");
       $("unitImperial")?.classList.toggle("active", mode === "imperial");
-      // re-render if we already have data
-      if (window.__panelRow) renderPanelSummary(window.__panelRow);
-      if (window.__monthlyRows) renderMonthlyTable(window.__monthlyRows);
+
+      if (window.__derived) renderAll(window.__derived);
     }
     $("unitMetric")?.addEventListener("click", () => setUnit("metric"));
     $("unitImperial")?.addEventListener("click", () => setUnit("imperial"));
 
-    // ---------- renderers ----------
-    function renderPanelSummary(d) {
-      const metric = unitMode === "metric";
+    // ---------------- compute derived views ----------------
+    function computeDerived(rows) {
+      // rows = filtered rows for this AVA
+      // numeric columns
+      const parsed = rows.map(r => {
+        const { year, month } = ymToYearMonth(r.ym);
+        return {
+          ava_id: r.ava_id,
+          name: r.name,
+          year,
+          month,
+          tmean_mean: Number(r.tmean_mean),
+          tmean_min:  Number(r.tmean_min),
+          tmean_max:  Number(r.tmean_max),
+          ppt_mean:   Number(r.ppt_mean),
+          ppt_min:    Number(r.ppt_min),
+          ppt_max:    Number(r.ppt_max),
+        };
+      });
 
-      const tAll = metric ? d.tmean_all_c : cToF(d.tmean_all_c);
-      const tSummer = metric ? d.tmean_summer_c : cToF(d.tmean_summer_c);
-      const pAnnual = metric ? d.ppt_annual_mm : mmToIn(d.ppt_annual_mm);
+      const years = parsed.map(r => r.year);
+      const minYear = Math.min(...years);
+      const maxYear = Math.max(...years);
 
-      // trend delta conversion: *9/5 (no +32)
-      const tTrend = metric ? d.tmean_trend_c_decade : (d.tmean_trend_c_decade * 9/5);
+      // Monthly normals: group by month across all years
+      const byMonth = new Map(); // month -> accum
+      for (const r of parsed) {
+        if (!byMonth.has(r.month)) {
+          byMonth.set(r.month, {
+            month: r.month,
+            n: 0,
+            tmean_mean: 0, tmean_min: 0, tmean_max: 0,
+            ppt_mean: 0, ppt_min: 0, ppt_max: 0,
+          });
+        }
+        const a = byMonth.get(r.month);
+        a.n += 1;
+        a.tmean_mean += r.tmean_mean;
+        a.tmean_min  += r.tmean_min;
+        a.tmean_max  += r.tmean_max;
+        a.ppt_mean   += r.ppt_mean;
+        a.ppt_min    += r.ppt_min;
+        a.ppt_max    += r.ppt_max;
+      }
 
-      $("s_tAll").textContent = `${fmt(tAll, 1)} ${metric ? "°C" : "°F"}`;
-      $("s_tSummer").textContent = `${fmt(tSummer, 1)} ${metric ? "°C" : "°F"}`;
-      $("s_pAnnual").textContent = `${fmt(pAnnual, metric ? 0 : 1)} ${metric ? "mm/yr" : "in/yr"}`;
-      $("s_tTrend").textContent = `${fmt(tTrend, 2)} ${metric ? "°C" : "°F"}/decade`;
+      const monthly = [];
+      for (let m = 1; m <= 12; m++) {
+        const a = byMonth.get(m);
+        if (!a || a.n === 0) {
+          monthly.push({ month: m, n: 0 });
+          continue;
+        }
+        monthly.push({
+          month: m,
+          n: a.n,
+          tmean_mean: a.tmean_mean / a.n,
+          tmean_min:  a.tmean_min  / a.n,
+          tmean_max:  a.tmean_max  / a.n,
+          ppt_mean:   a.ppt_mean   / a.n,
+          ppt_min:    a.ppt_min    / a.n,
+          ppt_max:    a.ppt_max    / a.n,
+        });
+      }
 
-      $("summaryNote").textContent = "Summary statistics shown for the selected AVA.";
+      // KPIs
+      const avg = (arr) => arr.reduce((s,v)=>s+v,0) / (arr.length || 1);
+
+      const tmeanAll = avg(parsed.map(r => r.tmean_mean));
+      const summerMonths = new Set([6,7,8]); // Jun Jul Aug
+      const tmeanSummer = avg(parsed.filter(r => summerMonths.has(r.month)).map(r => r.tmean_mean));
+      const pptMonthly = avg(parsed.map(r => r.ppt_mean));
+
+      return {
+        ava_id: parsed[0]?.ava_id ?? avaId,
+        name: parsed[0]?.name ?? nameFromUrl ?? "",
+        minYear, maxYear,
+        count: parsed.length,
+        monthly,
+        kpis: { tmeanAll, tmeanSummer, pptMonthly }
+      };
     }
 
-    // Expect monthly rows shaped like:
-    // { month: 1..12, tmean_c, tmin_c, tmax_c, ppt_mm }
-    // If your columns differ, just map them in normalizeMonthlyRows().
-    function renderMonthlyTable(rows) {
+    // ---------------- render ----------------
+    function renderAll(d) {
       const metric = unitMode === "metric";
+
+      // Update header (if CSV has canonical name)
+      if (d.name) {
+        $("title").textContent = `Climate: ${d.name}`;
+        $("crumbAva").textContent = d.name;
+      }
+      $("metaAvaId").textContent = `ava_id: ${d.ava_id ?? "—"}`;
+      $("metaPeriod").textContent = `period: ${d.minYear}–${d.maxYear}`;
+
+      const tAll = metric ? d.kpis.tmeanAll : cToF(d.kpis.tmeanAll);
+      const tSummer = metric ? d.kpis.tmeanSummer : cToF(d.kpis.tmeanSummer);
+      const ppt = metric ? d.kpis.pptMonthly : mmToIn(d.kpis.pptMonthly);
+
+      $("kpi_tmean").textContent = `${fmt(tAll, 1)} ${metric ? "°C" : "°F"}`;
+      $("kpi_tsummer").textContent = `${fmt(tSummer, 1)} ${metric ? "°C" : "°F"}`;
+      $("kpi_ppt").textContent = `${fmt(ppt, metric ? 0 : 2)} ${metric ? "mm" : "in"}`;
+      $("kpi_cov").textContent = `${d.minYear}–${d.maxYear}`;
+
+      $("overviewNote").textContent =
+        `Rows: ${d.count.toLocaleString()} monthly records. Period: ${d.minYear}–${d.maxYear}.`;
+
+      // Monthly table
       const body = $("monthlyBody");
       body.innerHTML = "";
 
-      for (let m = 1; m <= 12; m++) {
-        const r = rows.find(x => Number(x.month) === m);
-        const tmean = r ? Number(r.tmean_c) : NaN;
-        const tmin  = r ? Number(r.tmin_c) : NaN;
-        const tmax  = r ? Number(r.tmax_c) : NaN;
-        const ppt   = r ? Number(r.ppt_mm) : NaN;
-
-        const tmeanOut = metric ? tmean : cToF(tmean);
-        const tminOut  = metric ? tmin  : cToF(tmin);
-        const tmaxOut  = metric ? tmax  : cToF(tmax);
-        const pptOut   = metric ? ppt   : mmToIn(ppt);
+      for (const r of d.monthly) {
+        const m = r.month;
+        const tmean = metric ? r.tmean_mean : cToF(r.tmean_mean);
+        const tmin  = metric ? r.tmean_min  : cToF(r.tmean_min);
+        const tmax  = metric ? r.tmean_max  : cToF(r.tmean_max);
+        const pmean = metric ? r.ppt_mean   : mmToIn(r.ppt_mean);
+        const pmin  = metric ? r.ppt_min    : mmToIn(r.ppt_min);
+        const pmax  = metric ? r.ppt_max    : mmToIn(r.ppt_max);
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${MONTHS[m-1]}</td>
-          <td>${fmt(tmeanOut, 1)} ${metric ? "°C" : "°F"}</td>
-          <td>${fmt(tminOut, 1)} ${metric ? "°C" : "°F"}</td>
-          <td>${fmt(tmaxOut, 1)} ${metric ? "°C" : "°F"}</td>
-          <td>${fmt(pptOut, metric ? 0 : 2)} ${metric ? "mm" : "in"}</td>
+          <td>${fmt(tmean, 1)} ${metric ? "°C" : "°F"}</td>
+          <td>${fmt(tmin, 1)} ${metric ? "°C" : "°F"}</td>
+          <td>${fmt(tmax, 1)} ${metric ? "°C" : "°F"}</td>
+          <td>${fmt(pmean, metric ? 0 : 2)} ${metric ? "mm" : "in"}</td>
+          <td>${fmt(pmin, metric ? 0 : 2)} ${metric ? "mm" : "in"}</td>
+          <td>${fmt(pmax, metric ? 0 : 2)} ${metric ? "mm" : "in"}</td>
         `;
         body.appendChild(tr);
       }
+
+      $("monthlyNote").textContent = "Monthly normals computed by averaging each month across all years.";
     }
 
-    // ---------- data loading ----------
-    async function loadPanelStats() {
-      const res = await fetch("./assets/data/ava_panel_stats.json");
-      const arr = await res.json();
-      return arr.find(d => String(d.ava_id) === String(avaId));
-    }
-
-    // Configure these to match whatever you generated.
-    // Option A: per-AVA JSON file with monthly normals
-    //   ./assets/data/climate_detail/<ava_id>.json
-    //
-    // Option B: per-AVA CSV file with monthly normals
-    //   ./assets/data/climate_detail/<ava_id>.csv
-    //
-    // The loader tries JSON first, then CSV.
-    async function loadMonthlyDetail() {
-      const base = `./assets/data/climate_detail/${encodeURIComponent(avaId)}`;
-
-      // Try JSON
-      try {
-        const rj = await fetch(`${base}.json`);
-        if (rj.ok) {
-          const data = await rj.json();
-          return normalizeMonthlyRows(data);
-        }
-      } catch {}
-
-      // Try CSV
-      try {
-        const rc = await fetch(`${base}.csv`);
-        if (rc.ok) {
-          const text = await rc.text();
-          const rows = parseCsv(text);
-          return normalizeMonthlyRows(rows);
-        }
-      } catch {}
-
-      return null;
-    }
-
-    function normalizeMonthlyRows(data) {
-      // Accept either:
-      // - array of rows
-      // - object with { monthly: [...] }
-      const rows = Array.isArray(data) ? data : (data?.monthly ?? []);
-
-      // Map common column names to what we render.
-      // Adjust these keys to match your actual columns once you paste a sample row.
-      return rows.map(r => {
-        // month can be "1".."12" or "Jan" etc.
-        let month = r.month ?? r.mon ?? r.Month ?? r.MONTH;
-        if (typeof month === "string") {
-          const idx = MONTHS.map(m => m.toLowerCase()).indexOf(month.slice(0,3).toLowerCase());
-          if (idx >= 0) month = idx + 1;
-        }
-
-        return {
-          month: Number(month),
-          tmean_c: Number(r.tmean_c ?? r.tmean ?? r.TMEAN_C ?? r.mean_c ?? r.avg_temp_c),
-          tmin_c:  Number(r.tmin_c  ?? r.tmin  ?? r.TMIN_C  ?? r.min_c  ?? r.min_temp_c),
-          tmax_c:  Number(r.tmax_c  ?? r.tmax  ?? r.TMAX_C  ?? r.max_c  ?? r.max_temp_c),
-          ppt_mm:  Number(r.ppt_mm  ?? r.ppt   ?? r.PPT_MM  ?? r.precip_mm ?? r.precip)
-        };
-      }).filter(r => Number.isFinite(r.month) && r.month >= 1 && r.month <= 12);
-    }
-
+    // ---------------- load ----------------
     async function init() {
       if (!avaId) {
-        $("summaryNote").textContent = "No ava_id provided. Go back to the map and click an AVA.";
-        $("detailNote").textContent = "No AVA selected.";
+        $("overviewNote").textContent = "No ava_id provided. Go back to the map and click an AVA.";
+        $("monthlyNote").textContent = "No AVA selected.";
         return;
       }
 
-      // 1) Panel stats (already exists in your project)
       try {
-        const d = await loadPanelStats();
-        if (d) {
-          window.__panelRow = d;
-          // Fill title/period from real data if URL didn’t include it
-          if (!nameFromUrl && d.name) $("title").textContent = `Climate: ${d.name}`;
-          if (!periodFromUrl && d.period) $("metaPeriod").textContent = `period: ${d.period}`;
-          $("crumbAva").textContent = d.name ?? $("crumbAva").textContent;
+        const res = await fetch("./assets/data/ava_prism_monthly_stats.csv");
+        if (!res.ok) throw new Error("CSV fetch failed: " + res.status);
+        const text = await res.text();
+        const all = parseCsv(text);
 
-          renderPanelSummary(d);
-        } else {
-          $("summaryNote").textContent = "Couldn’t find panel stats for this AVA id.";
-        }
-      } catch (e) {
-        console.warn(e);
-        $("summaryNote").textContent = "Failed to load panel stats.";
-      }
-
-      // 2) Detailed monthly data (you’ll point the path to your real output)
-      try {
-        const rows = await loadMonthlyDetail();
-        if (!rows || !rows.length) {
-          $("detailNote").textContent =
-            "No detailed monthly file found for this AVA yet. Add a per-AVA CSV/JSON under assets/data/climate_detail/.";
+        const rows = all.filter(r => String(r.ava_id) === String(avaId));
+        if (!rows.length) {
+          $("overviewNote").textContent = "No rows found for this ava_id in the CSV.";
+          $("monthlyNote").textContent = "Nothing to display.";
           return;
         }
-        window.__monthlyRows = rows;
-        $("detailNote").textContent = "Monthly normals loaded.";
-        renderMonthlyTable(rows);
+
+        const derived = computeDerived(rows);
+        window.__derived = derived;
+        renderAll(derived);
       } catch (e) {
         console.warn(e);
-        $("detailNote").textContent = "Failed to load detailed dataset.";
+        $("overviewNote").textContent = "Failed to load / parse CSV. Check console.";
+        $("monthlyNote").textContent = "Failed to load.";
       }
     }
 
@@ -308,4 +316,3 @@
   </script>
 </body>
 </html>
-
