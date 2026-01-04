@@ -85,75 +85,67 @@ export async function attachClick(map, turf, ids, areaById) {
     console.warn("Panel JSON failed to load:", e);
   }
 
-  // Cache DOM now that it exists (ensure your script runs after the panel HTML)
+  // Cache DOM
   const panel = document.getElementById("infoPanel");
   const closeBtn = document.getElementById("panelClose");
   if (closeBtn && panel) closeBtn.onclick = () => panel.classList.add("hidden");
 
+  const metricBtn = document.getElementById("unitMetric");
+  const imperialBtn = document.getElementById("unitImperial");
+
   function renderPanel(d) {
     if (!d || !panel) return;
-  
+
     const metric = unitMode === "metric";
-  
+
     const tAll = metric ? d.tmean_all_c : cToF(d.tmean_all_c);
     const tSummer = metric ? d.tmean_summer_c : cToF(d.tmean_summer_c);
-  
+
     const pptAnnual = metric ? d.ppt_annual_mm : mmToIn(d.ppt_annual_mm);
-  
-    const tTrend = metric ? d.tmean_trend_c_decade : cToF(d.tmean_trend_c_decade) - cToF(0); 
-    // simpler: multiply by 9/5
+
+    // trend is a delta, so use *9/5 (no +32 offset)
     const tTrendFixed = metric ? d.tmean_trend_c_decade : d.tmean_trend_c_decade * 9/5;
-  
+
     const pTrend = metric ? d.ppt_trend_mm_decade : mmToIn(d.ppt_trend_mm_decade);
-  
+
     document.getElementById("panelTitle").textContent = d.name ?? "AVA";
     document.getElementById("panelPeriod").textContent = d.period ?? "";
-  
+
     document.getElementById("tAll").textContent =
       `${fmt(tAll, 1)} ${metric ? "°C" : "°F"}`;
     document.getElementById("tSummer").textContent =
       `${fmt(tSummer, 1)} ${metric ? "°C" : "°F"}`;
-  
+
     document.getElementById("pAnnual").textContent =
       `${fmt(pptAnnual, metric ? 0 : 1)} ${metric ? "mm/yr" : "in/yr"}`;
-  
+
     document.getElementById("tTrend").textContent =
       `${fmt(tTrendFixed, 2)} ${metric ? "°C" : "°F"}/decade`;
-  
+
     document.getElementById("pTrend").textContent =
       `${fmt(pTrend, metric ? 0 : 2)} ${metric ? "mm" : "in"}/decade`;
-    
+
     document.getElementById("detailsBtn").onclick = () => {
       const url =
         `./climate.html?ava_id=${encodeURIComponent(d.ava_id)}` +
         `&name=${encodeURIComponent(d.name ?? "")}` +
         `&period=${encodeURIComponent(d.period ?? "")}`;
-      
-        window.location.href = url;
-      };
-
+      window.location.href = url;
     };
-  
+
     panel.classList.remove("hidden");
   }
 
-
-  const metricBtn = document.getElementById("unitMetric");
-  const imperialBtn = document.getElementById("unitImperial");
-
   function setUnit(mode) {
     unitMode = mode;
-  
     metricBtn?.classList.toggle("active", mode === "metric");
     imperialBtn?.classList.toggle("active", mode === "imperial");
-  
     if (currentAva) renderPanel(currentAva);
   }
 
   metricBtn?.addEventListener("click", () => setUnit("metric"));
   imperialBtn?.addEventListener("click", () => setUnit("imperial"));
 
-  
   function openPanelForAva(ava_id) {
     const d = panelDataById[String(ava_id)];
     if (!d) return;
@@ -161,7 +153,7 @@ export async function attachClick(map, turf, ids, areaById) {
     renderPanel(d);
   }
 
-
+  // --- CLICK HANDLER ---
   map.on("click", async (e) => {
     const hits = map.queryRenderedFeatures(e.point, { layers: [FILL_ID] });
 
@@ -174,8 +166,8 @@ export async function attachClick(map, turf, ids, areaById) {
 
     const chosen = pickSmallestFeature(hits, areaById, turf);
 
-    const id = String(chosen.properties?.ava_id ?? chosen.id ?? "");
-    const area = (id && areaById.get(id)) ?? turf.area(chosen);
+    const avaId = String(chosen.properties?.ava_id ?? chosen.id ?? "");
+    const area = (avaId && areaById.get(avaId)) ?? turf.area(chosen);
     const center = getFeatureCenter(chosen, turf);
 
     const zoom = zoomFromArea(area);
@@ -191,16 +183,15 @@ export async function attachClick(map, turf, ids, areaById) {
       padding: { top: pad, bottom: pad, left: pad, right: pad }
     });
 
-    // Open panel using the feature's ava_id property
-    const avaId = chosen.properties?.ava_id;
     if (avaId) openPanelForAva(avaId);
 
-    // 2) Load + show vineyards
+    // Load + show vineyards
     try {
       const vineyards = await loadVineyardsForAva(avaId);
       setVineyards(map, vineyards);
     } catch (err) {
       console.warn("Failed to load vineyards for", avaId, err);
       setVineyards(map, { type: "FeatureCollection", features: [] });
-    }    
-});
+    }
+  });
+}
