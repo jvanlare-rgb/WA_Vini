@@ -43,6 +43,24 @@ function getFeatureCenter(feature, turf) {
   }
 }
 
+async function loadVineyardsForAva(avaId) {
+  const url = `./assets/data/vineyards_by_ava/${avaId}.geojson`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    // If an AVA has no file or isn't covered, clear layer gracefully
+    return { type: "FeatureCollection", features: [] };
+  }
+
+  return await res.json();
+}
+
+function setVineyards(map, gj) {
+  const src = map.getSource("vineyards");
+  if (src) src.setData(gj);
+}
+
+
 function cToF(c) { return (c * 9) / 5 + 32; }
 function mmToIn(mm) { return mm / 25.4; } // 25.4 mm per inch
 
@@ -143,6 +161,7 @@ export async function attachClick(map, turf, ids, areaById) {
     if (!hits.length) {
       map.easeTo({ pitch: 0, bearing: 0, duration: 700 });
       if (panel) panel.classList.add("hidden");
+      setVineyards(map, { type: "FeatureCollection", features: [] });
       return;
     }
 
@@ -168,5 +187,19 @@ export async function attachClick(map, turf, ids, areaById) {
     // Open panel using the feature's ava_id property
     const avaId = chosen.properties?.ava_id;
     if (avaId) openPanelForAva(avaId);
+
+    // 1) Open your stats panel (what you already do)
+    openPanelForAva(avaId);
+
+  // 2) Load + show vineyards
+    try {
+      const vineyards = await loadVineyardsForAva(avaId);
+      setVineyards(map, vineyards);
+    } catch (err) {
+      console.warn("Failed to load vineyards for", avaId, err);
+      setVineyards(map, { type: "FeatureCollection", features: [] });
+    }
+});
+    
   });
 }
