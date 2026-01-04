@@ -1,1 +1,55 @@
+<!-- climate.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AVA Climate Detail</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+    .muted { opacity: 0.7; }
+    .card { max-width: 900px; padding: 16px 18px; border: 1px solid #ddd; border-radius: 12px; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <h1>AVA Climate Detail</h1>
+  <p class="muted" id="subtitle"></p>
+
+  <div class="card">
+    <div id="content">Loading…</div>
+  </div>
+
+  <p style="margin-top:16px;">
+    <a href="./index.html">← Back to map</a>
+  </p>
+
+  <script>
+    function getParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    const avaId = getParam("ava_id");
+    const avaName = getParam("name");
+
+    document.getElementById("subtitle").textContent =
+      avaName ? `${avaName} (${avaId || "unknown"})` : (avaId ? avaId : "No AVA selected");
+
+    // TODO: replace this with your real data load:
+    // - fetch a JSON summary for the AVA
+    // - or load charts from a precomputed file
+    // Example placeholder:
+    const el = document.getElementById("content");
+    if (!avaId) {
+      el.innerHTML = "<b>No ava_id provided.</b><br/>Go back to the map and click an AVA, then use the button.";
+    } else {
+      el.innerHTML = `
+        <b>Selected AVA:</b> ${avaName ? avaName : ""}<br/>
+        <b>ava_id:</b> ${avaId}<br/><br/>
+        <b>Next step:</b> fetch and render the climate stats for this AVA here.
+      `;
+    }
+  </script>
+</body>
+</html>
 
