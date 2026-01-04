@@ -197,6 +197,3 @@ export async function attachClick(map, turf, ids, areaById) {
       setVineyards(map, { type: "FeatureCollection", features: [] });
     }
 });
-    
-  });
-}
