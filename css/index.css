@@ -14,11 +14,11 @@ html, body {
 /* Minimal overlay panel */
 #panel {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 280px;
-  padding: 14px 14px;
-  border-radius: 12px;
+  top: 14px;
+  left: 14px;
+  width: 252px;
+  padding: 12px 12px;
+  border-radius: 11px;
 
   background: rgba(10, 10, 10, 0.75);
   color: #eee;
@@ -28,35 +28,35 @@ html, body {
 }
 
 #panel h1 {
-  margin: 0 0 8px 0;
-  font-size: 16px;
+  margin: 0 0 7px 0;
+  font-size: 14px;
   font-weight: 650;
 }
 
 #panel p {
-  margin: 0 0 10px 0;
-  font-size: 13px;
+  margin: 0 0 9px 0;
+  font-size: 12px;
   opacity: 0.85;
 }
 
 #info {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.35;
   opacity: 0.9;
 }
 
 .panel {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 300px;
-  max-height: calc(100vh - 32px);
+  top: 14px;
+  right: 14px;
+  width: 270px;
+  max-height: calc(100vh - 28px);
   overflow: auto;
   background: rgba(20, 20, 20, 0.92);
   color: white;
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
-  padding: 14px;
+  border-radius: 13px;
+  padding: 12px;
   z-index: 10;
   backdrop-filter: blur(10px);
 }
@@ -73,19 +73,19 @@ html, body {
 
 .unit-toggle {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 7px;
+  margin-top: 9px;
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 8px 10px;
+  padding: 7px 9px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.16);
   background: rgba(255,255,255,0.06);
   color: white;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.9;
 }
 
@@ -95,18 +95,18 @@ html, body {
 }
 
 .panel h2 {
-  font-size: 18px;
+  font-size: 16px;
   margin: 0;
   line-height: 1.2;
 }
 
-.muted { opacity: 0.75; font-size: 12px; margin-top: 4px; }
+.muted { opacity: 0.75; font-size: 11px; margin-top: 4px; }
 
 .icon-btn {
   background: transparent;
   border: 0;
   color: white;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
   opacity: 0.8;
@@ -116,12 +116,12 @@ html, body {
 .panel-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 9px;
 }
 
 .stat {
-  padding: 10px;
-  border-radius: 12px;
+  padding: 9px;
+  border-radius: 11px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.08);
 }
@@ -132,11 +132,12 @@ html, body {
 .panel-footer { margin-top: 12px; display: flex; }
 .primary {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 9px 10px;
+  border-radius: 11px;
   border: 1px solid rgba(255,255,255,0.16);
   background: rgba(255,255,255,0.10);
   color: white;
   cursor: pointer;
+  font-size: 12px;  
 }
 .primary:hover { background: rgba(255,255,255,0.16); }
