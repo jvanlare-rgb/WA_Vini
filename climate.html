@@ -159,7 +159,9 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { loadSuitability, renderSuitability } from "./js/analysis/suitability.js";
+
     // ---------------- utils ----------------
     const $ = (id) => document.getElementById(id);
     const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -198,6 +200,8 @@
 
     // ---------------- state ----------------
     let unitMode = "metric"; // metric or imperial
+    let __suitability = null;
+
 
     const avaId = getParam("ava_id");
     const nameFromUrl = getParam("name");
@@ -213,6 +217,16 @@
       $("unitMetric")?.classList.toggle("active", mode === "metric");
       $("unitImperial")?.classList.toggle("active", mode === "imperial");
       if (window.__derived) renderAll(window.__derived);
+
+      if (__suitability) {
+        renderSuitability({
+          mountEl: $("suitabilityMount"),
+          noteEl: $("suitabilityNote"),
+          avaId,
+          unitMode,
+          data: __suitability
+        });
+      } 
     }
     $("unitMetric")?.addEventListener("click", () => setUnit("metric"));
     $("unitImperial")?.addEventListener("click", () => setUnit("imperial"));
@@ -554,6 +568,14 @@
         return;
       }
 
+            // kick off suitability load in parallel
+      const suitabilityPromise = loadSuitability().catch((e) => {
+        console.warn(e);
+        $("suitabilityNote").textContent = "Failed to load suitability stats.";
+        return null;
+      });
+
+
       try {
         const res = await fetch("./assets/data/ava_prism_monthly_stats.csv");
         if (!res.ok) throw new Error("CSV fetch failed: " + res.status);
@@ -573,6 +595,18 @@
         derived.monthSeries = computeMonthSeries(derived.parsed);
 
         window.__derived = derived;
+
+        __suitability = await suitabilityPromise;
+        if (__suitability) {
+          renderSuitability({
+            mountEl: $("suitabilityMount"),
+            noteEl: $("suitabilityNote"),
+            avaId,
+            unitMode,
+            data: __suitability
+          });
+        }
+
 
         // wire dropdown once
         $("chartSelect")?.addEventListener("change", () => {
