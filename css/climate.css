@@ -158,3 +158,44 @@ tbody tr:hover td{background:rgba(255,255,255,.03);}
   background: rgba(0,0,0,.12);
 }
 canvas{ display:block; width:100%; height:auto; }
+
+/* --- Suitability block --- */
+.suit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.suit-stat {
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(0,0,0,0.12);
+}
+
+.suit-stat .label {
+  opacity: 0.8;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.suit-stat .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.suit-stat .unit {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.suit-stat.disabled {
+  opacity: 0.65;
+}
+
+@media (max-width: 900px) {
+  .suit-grid { grid-template-columns: 1fr; }
+}
