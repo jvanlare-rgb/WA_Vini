@@ -1,7 +1,7 @@
 // js/analysis/suitability.js
 // Renders AVA climate suitability stats into the climate detail page.
 
-const SUITABILITY_URL = "../../ava_climate_suitability.json";
+const SUITABILITY_URL = "../../data/ava_climate_suitability.json";
 
 // unit helpers
 function cToF(c) { return (c * 9) / 5 + 32; }
